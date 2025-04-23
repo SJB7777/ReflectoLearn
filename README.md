@@ -1,2 +1,2 @@
-XRRmaker
+# XRRmaker
 Simulate X-Ray Reflectometry
