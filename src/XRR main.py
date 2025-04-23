@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import shutil
 import random
 import subprocess
@@ -22,27 +22,24 @@ range_11 = (0.0000, 30.0000)
 range_12 = (30.0000, 400.0000)
 
 # 실행할 외부 프로그램 명령어 (예: exe 파일 이름 또는 경로)
-program_command = "lsfit.exe"  # <- 실제 실행 파일명으로 수정
+program_command = Path("lsfit.exe")  # <- 실제 실행 파일명으로 수정
 
 # 결과 저장 디렉토리
-base_dir = "results"
-os.makedirs(base_dir, exist_ok=True)
+base_dir = Path("results")
+base_dir.mkdir(exist_ok=True)
 
-# 반복 인덱스 시작값
-i = 1
 
 print("자동 반복 시작! 중지하려면 Ctrl + C 를 누르세요.\n")
-
 # ---------------- 무한 반복 루프 ----------------
-
+i = 1
 try:
     while i < 10001:
         # 새 폴더 생성 (예: results/data1)
-        folder_name = os.path.join(base_dir, f"data{i}")
-        os.makedirs(folder_name, exist_ok=True)
+        folder_name = base_dir / f"data{i}"
+        folder_name.mkdir(exist_ok=True)
 
         # 원본 1.con.txt 파일을 읽어서 라인 리스트로 저장
-        with open("1.con", "r") as f:
+        with open("1.con", "r", encoding='utf-8') as f:
             lines = f.readlines()
 
         # 랜덤 파라미터 생성
@@ -54,11 +51,12 @@ try:
         val16 = round(random.uniform(*range_12), 4)
 
         # 수정할 줄 번호 인덱스 (파일 줄 번호는 1부터지만, 인덱스는 0부터 시작)
-        param_idx = [9, 10, 11, 12, 13, 14, 15, 16]
+        param_idx = (9, 10, 11, 12, 13, 14, 15, 16)
         param_idx = [idx + 3 for idx in param_idx]
         # 값만 바꿔서 포맷 유지하는 함수
         def replace_value(line, new_value):
-            return f"{line[:37]}{new_value:8.6}      {line.split()[-1]}\n"
+            new_str = str(new_value).ljust(7, '0')[:8]
+            return f"{line[:37]}{new_str}      {line.split()[-1]}\n"
 
         # 9~12번 파라미터 줄 수정
         lines[param_idx[0]] = replace_value(lines[param_idx[0]], val9)
@@ -71,7 +69,7 @@ try:
         lines[param_idx[7]] = replace_value(lines[param_idx[7]], val16)
 
         # 수정된 설정 파일을 1.con 으로 저장
-        with open("1.con", "w") as f:
+        with open("1.con", "w", encoding='utf-8') as f:
             f.writelines(lines)
 
         # 프로그램 실행 후 e y y y 입력 전달
@@ -79,8 +77,8 @@ try:
         proc.communicate(input=b"\n\ne\ny\ny\ny\n")
         time.sleep(0.4)
         # 결과 파일을 폴더에 저장
-        shutil.copy("1.con", os.path.join(folder_name, "1.con"))
-        shutil.copy("1.out", os.path.join(folder_name, "1.out"))
+        shutil.copy("1.con", folder_name / "1.con")
+        shutil.copy("1.out", folder_name / "1.out")
 
         # 진행 상황 출력
         print(f"[{time.strftime('%H:%M:%S')}] {folder_name} 완료")
