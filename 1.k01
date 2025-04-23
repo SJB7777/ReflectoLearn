@@ -1,0 +1,27 @@
+Parameter and refinement control file produced by  program LSFIT
+DBI G/N Text for X-axis(A20) Text for Y-axis(A20) REP       
+I   N   z  [\AA]             log(|FT\{Int\cdotq_{   1
+### name of parameter.............  Value          Increment
+  1 footprint in deg                0.4818405      0.2400212E-02
+  2 background (-log value)          0.000000      0.2052992E-02
+  3 diffractometer resolution        5.900000      0.1272870E-01
+  4 [disp,n*b] reference material    0.000000      0.3053987E-02
+  5 disp / n*b substrate 0 part 1    7.743286      0.6482115E-02
+  6 di_nb/beta substrate 0 part 1    16.50493      0.9756327E-01
+  7 sigma substrate in A 0 part 1    7.930000      0.6627454E-01
+  8 intensity offset                 0.000000      0.1220556E-02
+  9 disp / n*b layer     1 part 1    7.199254      0.7647779E-02
+ 10 di_nb/beta layer     1 part 1    27.42791      0.8615628E-01
+ 11 sigma layer in A     1 part 1    7.176448      0.1143266E-01
+ 12 layer thickness      1 part 1    55.92199      0.2033561E-01
+ 13 disp / n*b layer     2 part 1    3.676585      0.5367486E-02
+ 14 di_nb/beta layer     2 part 1    186.4929      0.7082641E-01
+ 15 sigma layer in A     2 part 1    2.784329      0.9452279E-02
+ 16 layer thickness      2 part 1    1448.922      0.1259652    
+ 17 disp / n*b layer     3 part 1    3.676585      0.5367486E-02
+ 18 di_nb/beta layer     3 part 1    186.4929      0.7082641E-01
+ 19 sigma layer in A     3 part 1    2.784329      0.9452279E-02
+ 20 layer thickness      3 part 1    300.0000      0.1259652    
+Parameter Variation pattern  /  selected files :  1111
+0        1         2         3         4         5         6         7         
+1234567890123456789012345678901234567890123456789012345678901234567890123456789
