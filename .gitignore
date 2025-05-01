@@ -173,5 +173,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# pylint configuration file
+.pylintrc
 
-src/results/
+# Data files
+src/data/

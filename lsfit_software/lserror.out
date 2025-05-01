@@ -14,16 +14,14 @@ C the model function was calculated with the following set of parameters
 C
 C     description                       value          sigma      last change
 C   1  footprint in deg                0.2025540       0.000000       0.000000    
-C   2  background (-log value)         0.4000000       0.000000       0.000000    
+C   2  background (-log value)         0.4000000E-02   0.000000       0.000000    
 C   3  diffractometer resolution        5.000000       0.000000       0.000000    
 C   4  [disp,n*b] reference material    0.000000       0.000000       0.000000    
-C   5  disp / n*b substrate 0 part 2    4.884649       0.000000       0.000000    
-C   6  di_nb/beta substrate 0 part 2    117.2382       0.000000       0.000000    
-C   7  sigma substrate in A 0 part 2    2.421656       0.000000       0.000000    
-C   8  intensity offset                0.1071700E-01   0.000000       0.000000    
-C   9  disp / n*b layer     1 part 2    10.00000       0.000000       0.000000    
-C  10  di_nb/beta layer     1 part 2    47.00000       0.000000       0.000000    
-C  11  sigma layer in A     1 part 2    13.40700       0.000000       0.000000    
+C   5  disp / n*b substrate 0 part 1    4.884649       0.000000       0.000000    
+C   6  di_nb/beta substrate 0 part 1    117.2382       0.000000       0.000000    
+C   7  sigma substrate in A 0 part 1    2.421656       0.000000       0.000000    
+C   8  intensity offset                0.1071720E-01   0.000000       0.000000    
+C   9  disp / n*b layer     1 part 1    10.33217       0.000000       0.000000    
 C 
 C quality of the agreement data vs. model
 C
