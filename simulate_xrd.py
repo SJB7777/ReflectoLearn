@@ -12,9 +12,9 @@ from tqdm import tqdm
 @dataclass
 class Substrate:
     name: str = None
-    sld: float = None
-    roughness: float = None
-    density: float = None
+    sld: float = None  # disp / n*b substrate
+    roughness: float = None  # sigma layer in A
+    density: float = None  # di_nb/beta layer
 
 
 @dataclass
@@ -172,82 +172,83 @@ def generate_multilayer(
     min_layers: int = 1, max_layers: int = 5, use_templates: bool = True
 ) -> dict[str, Substrate | list[Layer]]:
     """랜덤한 다층 구조를 생성하는 함수."""
-    # substrate_name = random.choice(list(MATERIAL_DATABASE["substrates"].keys()))
-    # substrate_sld, substrate_density = MATERIAL_DATABASE["substrates"][substrate_name]
-    # substrate_roughness_range = get_roughness_range(substrate_name)
+    substrate_name = random.choice(list(MATERIAL_DATABASE["substrates"].keys()))
+    substrate_sld, substrate_density = MATERIAL_DATABASE["substrates"][substrate_name]
+    substrate_roughness_range = get_roughness_range(substrate_name)
 
-    #   substrate = Substrate(
-    #       name=substrate_name,
-    #       sld=substrate_sld,
-    #      roughness=random.uniform(*substrate_roughness_range),
-    #      density=substrate_density,
-    #   )
-    # substrate = Substrate()
-    #  layers = []
-
-    #  if use_templates and random.random() < 0.7:  # 70% 확률로 템플릿 사용
-    #      template = random.choice(MULTILAYER_TEMPLATES)
-    #       for name in template["layers"][:max_layers]:
-    #           sld, density = MATERIAL_DATABASE["layers"].get(name, (None, None))
-    #          roughness_range = get_roughness_range(name)
-    #          thickness_range = get_thickness_range(name)
-
-    #          layer = Layer(
-    #               name=name,
-    #               sld=sld,
-    #               roughness=random.uniform(*roughness_range),
-    #              density=density,
-    #              thickness=random.uniform(*thickness_range),
-    #           )
-    #           layers.append(layer)
-    #   else:
-    #      num_layers = random.randint(min_layers, max_layers)
-    #      for _ in range(num_layers):
-    #           name = random.choice(list(MATERIAL_DATABASE["layers"].keys()))
-    #           sld, density = MATERIAL_DATABASE["layers"][name]
-    #           roughness_range = get_roughness_range(name)
-    #          thickness_range = get_thickness_range(name)
-    #        layers.append(layer)
-    substrate_name = "SiO2"
     substrate = Substrate(
         name=substrate_name,
-        sld=SLD_DENSITY[substrate_name][0] * random.uniform(0.7, 1.3),
-        density=SLD_DENSITY[substrate_name][1] * random.uniform(0.7, 1.3),
-        roughness=random.uniform(*ROUGHNESS_RANGES[substrate_name]),
-    )
-    name1 = "TiN"
-    thickness1 = random.uniform(*THICKNESS_RANGES["default"])
-    roughness1 = thickness1 * random.uniform(0, 0.7)
-    layer1 = Layer(
-        name=substrate_name,
-        sld=SLD_DENSITY[name1][0] * random.uniform(0.7, 1.3),
-        density=SLD_DENSITY[name1][1] * random.uniform(0.7, 1.3),
-        roughness=roughness1,
-        thickness=thickness1,
-    )
-    name2 = "HfO2"
-    thickness2 = random.uniform(*THICKNESS_RANGES["default"])
-    roughness2 = thickness2 * random.uniform(0, 0.7)
-    layer2 = Layer(
-        name=substrate_name,
-        sld=SLD_DENSITY[name2][0] * random.uniform(0.7, 1.3),
-        density=SLD_DENSITY[name2][1] * random.uniform(0.7, 1.3),
-        roughness=roughness2,
-        thickness=thickness2,
-    )
-    name3 = "TiN"
-    thickness3 = random.uniform(*THICKNESS_RANGES["default"])
-    roughness3 = thickness3 * random.uniform(0, 0.7)
-    layer3 = Layer(
-        name=substrate_name,
-        sld=SLD_DENSITY[name3][0] * random.uniform(0.7, 1.3),
-        density=SLD_DENSITY[name3][1] * random.uniform(0.7, 1.3),
-        roughness=roughness3,
-        thickness=thickness3,
+        sld=substrate_sld,
+        roughness=random.uniform(*substrate_roughness_range),
+        density=substrate_density,
     )
 
-    layers = [layer1, layer2, layer3]
+    layers = []
+    if use_templates and random.random() < 0.7:  # 70% 확률로 템플릿 사용
+        template = random.choice(MULTILAYER_TEMPLATES)
+        for name in template["layers"][:max_layers]:
+            sld, density = MATERIAL_DATABASE["layers"].get(name, (None, None))
+            roughness_range = get_roughness_range(name)
+            thickness_range = get_thickness_range(name)
+
+            layer = Layer(
+                name=name,
+                sld=sld,
+                roughness=random.uniform(*roughness_range),
+                density=density,
+                thickness=random.uniform(*thickness_range),
+            )
+            layers.append(layer)
+    else:
+        num_layers = random.randint(min_layers, max_layers)
+        for _ in range(num_layers):
+            name = random.choice(list(MATERIAL_DATABASE["layers"].keys()))
+            sld, density = MATERIAL_DATABASE["layers"][name]
+            roughness_range = get_roughness_range(name)
+            thickness_range = get_thickness_range(name)
+        layers.append(layer)
     return {"substrate": substrate, "layers": layers}
+
+    # substrate_name = "SiO2"
+    # substrate = Substrate(
+    #     name=substrate_name,
+    #     sld=SLD_DENSITY[substrate_name][0] * random.uniform(0.7, 1.3),
+    #     density=SLD_DENSITY[substrate_name][1] * random.uniform(0.7, 1.3),
+    #     roughness=random.uniform(*ROUGHNESS_RANGES[substrate_name]),
+    # )
+    # name1 = "TiN"
+    # thickness1 = random.uniform(*THICKNESS_RANGES["default"])
+    # roughness1 = thickness1 * random.uniform(0, 0.7)
+    # layer1 = Layer(
+    #     name=substrate_name,
+    #     sld=SLD_DENSITY[name1][0] * random.uniform(0.7, 1.3),
+    #     density=SLD_DENSITY[name1][1] * random.uniform(0.7, 1.3),
+    #     roughness=roughness1,
+    #     thickness=thickness1,
+    # )
+    # name2 = "HfO2"
+    # thickness2 = random.uniform(*THICKNESS_RANGES["default"])
+    # roughness2 = thickness2 * random.uniform(0, 0.7)
+    # layer2 = Layer(
+    #     name=substrate_name,
+    #     sld=SLD_DENSITY[name2][0] * random.uniform(0.7, 1.3),
+    #     density=SLD_DENSITY[name2][1] * random.uniform(0.7, 1.3),
+    #     roughness=roughness2,
+    #     thickness=thickness2,
+    # )
+    # name3 = "TiN"
+    # thickness3 = random.uniform(*THICKNESS_RANGES["default"])
+    # roughness3 = thickness3 * random.uniform(0, 0.7)
+    # layer3 = Layer(
+    #     name=substrate_name,
+    #     sld=SLD_DENSITY[name3][0] * random.uniform(0.7, 1.3),
+    #     density=SLD_DENSITY[name3][1] * random.uniform(0.7, 1.3),
+    #     roughness=roughness3,
+    #     thickness=thickness3,
+    # )
+
+    # layers = [layer1, layer2, layer3]
+    # return {"substrate": substrate, "layers": layers}
 
 
 def rewrite_con_file(
