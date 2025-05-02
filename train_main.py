@@ -73,7 +73,6 @@ def train_cnn(
         epochs=epochs,
         batch_size=batch_size,
         val_ratio=val_ratio,
-        save_best_only=True,  # Save only if validation loss improves
     )
 
 

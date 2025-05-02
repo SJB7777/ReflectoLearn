@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from pathlib import Path
 import shutil
 import subprocess
+from subprocess import CompletedProcess
 import json
 
-# import numpy as np
 from tqdm import tqdm
 
 
@@ -206,7 +206,14 @@ def generate_multilayer(
             sld, density = MATERIAL_DATABASE["layers"][name]
             roughness_range = get_roughness_range(name)
             thickness_range = get_thickness_range(name)
-        layers.append(layer)
+            layer = Layer(
+                name=name,
+                sld=sld,
+                roughness=random.uniform(*roughness_range),
+                density=density,
+                thickness=random.uniform(*thickness_range),
+            )
+            layers.append(layer)
     return {"substrate": substrate, "layers": layers}
 
     # substrate_name = "SiO2"
@@ -318,40 +325,64 @@ def run_lsfit(
     save_dir: Path,
     new_lines: list[str],
     capture_output: bool = True,
-):
+) -> CompletedProcess[str]:
     """lsfit 소프트웨어를 실행하는 함수"""
     shutil.copy(software_dir / "1.dat", save_dir / "1.dat")
     with open(save_dir / "1.con", "w", encoding="utf-8") as f:
         f.writelines(new_lines)
 
-    start = (save_dir / "1").as_posix().encode() + b"\n\n"
-    save = b"e\ny\ny\ny\n"
-    end = b"q"
+    start = (
+        str(save_dir / "1") + "\n"
+    )  # 알부로 틀린 경로를 입력으로 줘봄 이럴떄 프로그램이 멈췄으면 좋겠지만 무한히 기다림림
+    save = "e\ny\ny\ny\n"
+    end = "q"
     command = start + save + end
-
-    subprocess.run(
+    result = subprocess.run(
         [software_dir / "lsfit.exe"],
-        cwd=software_dir,
+        cwd=save_dir,
         input=command,
+        text=True,
         capture_output=capture_output,
         check=True,
+        encoding="utf-8",
+        timeout=5,
     )
+
+    return result.stdout, result.stderr
+    # TODO: To handle the error, we need to check the output and error messages.
+    # process = subprocess.Popen(
+    #     [software_dir / "lsfit.exe"],
+    #     cwd=save_dir,
+    #     stdin=subprocess.PIPE,
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.PIPE,
+    #     text=True
+    # )
+
+    # # 줄 단위로 보내기
+    # for line in [str(save_dir / "111"), "e", "y", "y", "y", "q"]:
+    #     process.stdin.write(line + "\n")
+    #     process.stdin.flush()
+    # stdout, stderr = process.communicate()
+    # print(stdout)
+    # print(stderr)
 
 
 def main() -> None:
     """메인 함수"""
-    software_dir = Path(".\\lsfit_software")
-    save_root = Path("..\\data\\simulation_data").absolute()
+    software_dir = Path(".\\lsfit_software").resolve()
+    save_root = Path("..\\data\\simulation_data").resolve()
     save_root.mkdir(exist_ok=True, parents=True)
 
     with open(software_dir / "1.con", "r", encoding="utf-8") as f:
         con_lines = f.readlines()
-    for run_n in tqdm(range(1, 10001)):
-        multilayer = generate_multilayer(min_layers=1, max_layers=2)
+
+    for run_n in tqdm(range(1, 10001), desc="Generating multilayers"):
+        multilayer = generate_multilayer(min_layers=1, max_layers=3)
         new_lines = rewrite_con_file(con_lines, multilayer)
 
         save_dir = save_root / f"d{run_n:05}"
-        # More than 8 characters will make error in lsfit
+        # NOTE: More than 8 characters will make error in lsfit
         if len(save_dir.stem) > 8:
             raise ValueError(
                 f"Directory name {save_dir.stem} is too long. Max length is 8 characters."
