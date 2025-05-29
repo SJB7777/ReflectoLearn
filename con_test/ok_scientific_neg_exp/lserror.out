@@ -1,0 +1,30 @@
+C Output produced by program LSFIT
+C common name of the files : lserror                                                                     
+C no creation time is given out any longer 
+C
+C Before you consider to publish these results,
+C check them with a professional least-square program.
+C
+C selected files : 1
+C   CONIN : CON - file not found                                             
+C                   or                                                       
+C            CON - file broken                                               
+C
+C the model function was calculated with the following set of parameters
+C
+C     description                       value          sigma      last change
+C 
+C quality of the agreement data vs. model
+C
+C Chi-square                   0.000000    
+C goodness-of-fit              0.000000    
+C absolute values  R-factor    0.000000    
+C weighted profile R-factor    0.000000    
+C expected         R-factor    0.000000    
+C
+ C WRICOR : no valid correlation matrix
+C
+C list of observed and calculated data
+C
+C    #       XOBS          YOBS          YCALC         DELTA        DELTA/SIGMA
+C 

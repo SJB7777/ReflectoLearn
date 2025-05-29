@@ -135,15 +135,24 @@ class MLPManager(ModelManager):
         def __init__(self, input_dim: int = 626, output_dim: int = 20):
             super().__init__()
             self.model = nn.Sequential(
+                # 첫 번째 은닉 레이어
                 nn.Linear(input_dim, 512),
                 nn.ReLU(),
                 nn.BatchNorm1d(512),
+                # 두 번째 은닉 레이어
                 nn.Linear(512, 256),
                 nn.ReLU(),
                 nn.BatchNorm1d(256),
+                # 세 번째 은닉 레이어
                 nn.Linear(256, 128),
                 nn.ReLU(),
-                nn.Linear(128, output_dim),
+                nn.BatchNorm1d(128),
+                # 네 번째 은닉 레이어 추가
+                # nn.Linear(128, 64),
+                # nn.ReLU(),
+                # nn.BatchNorm1d(64),
+                # 출력 레이어
+                nn.Linear(16, output_dim),
             )
 
         def forward(self, x):

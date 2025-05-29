@@ -1,12 +1,25 @@
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
-import shutil
-import subprocess
-from subprocess import CompletedProcess
 import json
 
 from tqdm import tqdm
+
+from src.lsfit_wrapper import run_lsfit
+
+
+layer_param_name = {
+    "sld": "disp / n*b layer",
+    "roughness": "sigma layer in A",
+    "density": "di_nb/beta layer",
+    "thickness": "layer thickness",
+}
+
+substate_param_name = {
+    "sld": "disp / n*b substrate",
+    "roughness": "sigma substrate in A",
+    "density": "di_nb/beta substrate",
+}
 
 
 @dataclass
@@ -15,6 +28,10 @@ class Substrate:
     sld: float = None  # disp / n*b substrate
     roughness: float = None  # sigma layer in A
     density: float = None  # di_nb/beta layer
+
+    def __post_init__(self):
+        if self.roughness == 0:
+            raise ValueError("SLD cannot be zero.")
 
 
 @dataclass
@@ -25,272 +42,107 @@ class Layer:
     density: float = None
     thickness: float = None
 
-
-# 실제 물질 데이터베이스 (물질명, SLD, 밀도)
-# SLD 단위: 10^-6 Å^-2, 밀도 단위: g/cm^3
-MATERIAL_DATABASE = {
-    # 기판 물질
-    "substrates": {
-        "Si": (20.0700, 2.3290),  # 실리콘
-        "SiO2": (18.9000, 2.2000),  # 이산화규소 (석영)
-        "Al2O3": (33.5000, 3.9700),  # 알루미나 (사파이어)
-        "GaAs": (19.5800, 5.3170),  # 갈륨비소
-        "MgO": (17.7000, 3.5800),  # 산화마그네슘
-    },
-    # 층 물질
-    "layers": {
-        # 금속
-        "Al": (21.3000, 2.7000),  # 알루미늄
-        "Ti": (18.9000, 4.5060),  # 티타늄
-        "Cr": (28.0200, 7.1400),  # 크롬
-        "Fe": (56.1300, 7.8740),  # 철
-        "Co": (60.7000, 8.9000),  # 코발트
-        "Ni": (68.7200, 8.9020),  # 니켈
-        "Cu": (56.4700, 8.9600),  # 구리
-        "Zn": (48.8000, 7.1330),  # 아연
-        "Pt": (96.5000, 21.4500),  # 백금
-        "Au": (130.300, 19.3200),  # 금
-        "Ag": (37.3000, 10.4900),  # 은
-        # 산화물
-        "SiO2": (18.9000, 2.2000),  # 이산화규소
-        "TiO2": (30.5800, 4.2300),  # 이산화티타늄
-        "Fe2O3": (41.1400, 5.2400),  # 산화철
-        "Fe3O4": (37.0100, 5.1750),  # 자철석
-        "ZnO": (42.3800, 5.6100),  # 산화아연
-        "Al2O3": (33.5000, 3.9700),  # 알루미나
-        "HfO2": (45.1600, 9.6800),  # 이산화하프늄
-        # 반도체
-        "Si": (20.0700, 2.3290),  # 실리콘
-        "Ge": (28.3000, 5.3230),  # 게르마늄
-        "GaAs": (19.5800, 5.3170),  # 갈륨비소
-        "InP": (20.6600, 4.8100),  # 인화인듐
-        # 자성체
-        "CoFe": (58.4100, 8.3870),  # 코발트-철 합금
-        "CoFeB": (56.0000, 8.2000),  # 코발트-철-붕소 합금
-        "NiFe": (64.7100, 8.7000),  # 니켈-철 합금 (퍼멀로이)
-        # 다층 자성 메모리 물질
-        "MgO": (17.7000, 3.5800),  # 산화마그네슘
-        "Ta": (55.0800, 16.6540),  # 탄탈륨
-        "IrMn": (65.0000, 10.1800),  # 이리듐-망간 합금
-    },
-}
-
-# 물질별 표면 거칠기 범위 (Å)
-ROUGHNESS_RANGES = {
-    "Si": (2.0, 8.0),
-    "SiO2": (0, 50.0),
-    "Al2O3": (3.0, 12.0),
-    "GaAs": (2.5, 10.0),
-    "MgO": (2.0, 9.0),
-    "Al": (5.0, 20.0),
-    "Ti": (4.0, 15.0),
-    "Cr": (3.0, 12.0),
-    "Fe": (4.0, 15.0),
-    "Co": (3.5, 12.0),
-    "Ni": (3.0, 12.0),
-    "Cu": (3.5, 14.0),
-    "Zn": (5.0, 18.0),
-    "Pt": (2.0, 10.0),
-    "Au": (2.0, 10.0),
-    "Ag": (2.5, 11.0),
-    "TiO2": (3.0, 12.0),
-    "Fe2O3": (4.0, 15.0),
-    "Fe3O4": (4.0, 15.0),
-    "ZnO": (3.5, 14.0),
-    "HfO2": (3.0, 11.0),
-    "Ge": (3.0, 12.0),
-    "InP": (2.5, 10.0),
-    "CoFe": (3.0, 12.0),
-    "CoFeB": (3.0, 12.0),
-    "NiFe": (3.0, 12.0),
-    "Ta": (3.0, 12.0),
-    "IrMn": (3.0, 12.0),
-    "default": (2.0, 15.0),  # 기본 범위
-}
-
-# 물질별 층 두께 범위 (Å)
-THICKNESS_RANGES = {
-    "Al": (50, 500),
-    "Ti": (30, 300),
-    "Cr": (30, 300),
-    "Fe": (30, 400),
-    "Co": (20, 200),
-    "Ni": (30, 300),
-    "Cu": (50, 500),
-    "Zn": (50, 400),
-    "Pt": (20, 200),
-    "Au": (20, 300),
-    "Ag": (30, 400),
-    "SiO2": (50, 1000),
-    "TiO2": (30, 500),
-    "Fe2O3": (30, 400),
-    "Fe3O4": (30, 400),
-    "ZnO": (30, 500),
-    "Al2O3": (50, 800),
-    "HfO2": (30, 300),
-    "Si": (100, 1000),
-    "Ge": (50, 500),
-    "GaAs": (50, 500),
-    "InP": (50, 500),
-    "CoFe": (20, 150),
-    "CoFeB": (20, 150),
-    "NiFe": (20, 200),
-    "MgO": (10, 100),
-    "Ta": (30, 200),
-    "IrMn": (30, 200),
-    "default": (0, 500),  # 기본 범위
-}
-
-SLD_DENSITY = {"SiO2": (4.88, 117), "TiN": (10.33, 22.78), "HfO2": (15.1, 8.45)}
-
-# 특정 다층 구조 템플릿 정의
-MULTILAYER_TEMPLATES = [
-    # 자기 터널 접합(MTJ) 구조
-    {"name": "MTJ", "layers": ["Ta", "CoFeB", "MgO", "CoFeB", "Ta"]},
-    # 거대자기저항(GMR) 구조
-    {"name": "GMR", "layers": ["Ta", "NiFe", "Cu", "CoFe", "IrMn", "Ta"]},
-    # 반도체 게이트 구조
-    {"name": "Gate_Stack", "layers": ["Si", "SiO2", "HfO2", "Ti", "Al"]},
-    # 광학 반사 코팅
-    {"name": "Optical_Coating", "layers": ["SiO2", "TiO2", "SiO2", "TiO2"]},
-    # 금속-산화물-반도체 구조
-    {"name": "MOS", "layers": ["Si", "SiO2", "Al"]},
-]
-
-
-def get_roughness_range(material_name: str) -> tuple[float, float]:
-    """물질에 따른 거칠기 범위를 반환하는 함수"""
-    return ROUGHNESS_RANGES.get(material_name, ROUGHNESS_RANGES["default"])
-
-
-def get_thickness_range(material_name: str) -> tuple[float, float]:
-    """물질에 따른 두께 범위를 반환하는 함수"""
-    return THICKNESS_RANGES.get(material_name, THICKNESS_RANGES["default"])
+    def __post_init__(self):
+        if self.roughness == 0:
+            raise ValueError("SLD cannot be zero.")
 
 
 def generate_multilayer(
-    min_layers: int = 1, max_layers: int = 5, use_templates: bool = True
+    min_layers: int = 1, max_layers: int = 5
 ) -> dict[str, Substrate | list[Layer]]:
-    """랜덤한 다층 구조를 생성하는 함수."""
-    substrate_name = random.choice(list(MATERIAL_DATABASE["substrates"].keys()))
-    substrate_sld, substrate_density = MATERIAL_DATABASE["substrates"][substrate_name]
-    substrate_roughness_range = get_roughness_range(substrate_name)
 
     substrate = Substrate(
-        name=substrate_name,
-        sld=substrate_sld,
-        roughness=random.uniform(*substrate_roughness_range),
-        density=substrate_density,
+        name="Si",
+        sld=4.899598,  # Si SLD in 10^-6 Å^-2
+        roughness=0.1,
+        density=66.116276,
     )
 
-    layers = []
-    if use_templates and random.random() < 0.7:  # 70% 확률로 템플릿 사용
-        template = random.choice(MULTILAYER_TEMPLATES)
-        for name in template["layers"][:max_layers]:
-            sld, density = MATERIAL_DATABASE["layers"].get(name, (None, None))
-            roughness_range = get_roughness_range(name)
-            thickness_range = get_thickness_range(name)
+    sio2_thickness = 8
+    sio2_layer = Layer(
+        name="SiO2",
+        sld=4.610959 * random.uniform(0.7, 1.3),
+        roughness=random.uniform(0.1, sio2_thickness * 0.3),
+        density=117.329199 * random.uniform(0.7, 1.3),
+        thickness=sio2_thickness,
+    )
 
-            layer = Layer(
-                name=name,
-                sld=sld,
-                roughness=random.uniform(*roughness_range),
-                density=density,
-                thickness=random.uniform(*thickness_range),
-            )
-            layers.append(layer)
-    else:
-        num_layers = random.randint(min_layers, max_layers)
-        for _ in range(num_layers):
-            name = random.choice(list(MATERIAL_DATABASE["layers"].keys()))
-            sld, density = MATERIAL_DATABASE["layers"][name]
-            roughness_range = get_roughness_range(name)
-            thickness_range = get_thickness_range(name)
-            layer = Layer(
-                name=name,
-                sld=sld,
-                roughness=random.uniform(*roughness_range),
-                density=density,
-                thickness=random.uniform(*thickness_range),
-            )
-            layers.append(layer)
+    hfo2_thickness = random.randint(1, 30)
+    hfo2_layer = Layer(
+        name="HfO2",
+        sld=15.12988 * random.uniform(0.7, 1.3),
+        roughness=random.uniform(0.1, hfo2_thickness * 0.3),
+        density=7.8903 * random.uniform(0.7, 1.3),
+        thickness=random.randint(1, 30),
+    )
+
+    layers = [sio2_layer, hfo2_layer]
+
     return {"substrate": substrate, "layers": layers}
 
-    # substrate_name = "SiO2"
-    # substrate = Substrate(
-    #     name=substrate_name,
-    #     sld=SLD_DENSITY[substrate_name][0] * random.uniform(0.7, 1.3),
-    #     density=SLD_DENSITY[substrate_name][1] * random.uniform(0.7, 1.3),
-    #     roughness=random.uniform(*ROUGHNESS_RANGES[substrate_name]),
-    # )
-    # name1 = "TiN"
-    # thickness1 = random.uniform(*THICKNESS_RANGES["default"])
-    # roughness1 = thickness1 * random.uniform(0, 0.7)
-    # layer1 = Layer(
-    #     name=substrate_name,
-    #     sld=SLD_DENSITY[name1][0] * random.uniform(0.7, 1.3),
-    #     density=SLD_DENSITY[name1][1] * random.uniform(0.7, 1.3),
-    #     roughness=roughness1,
-    #     thickness=thickness1,
-    # )
-    # name2 = "HfO2"
-    # thickness2 = random.uniform(*THICKNESS_RANGES["default"])
-    # roughness2 = thickness2 * random.uniform(0, 0.7)
-    # layer2 = Layer(
-    #     name=substrate_name,
-    #     sld=SLD_DENSITY[name2][0] * random.uniform(0.7, 1.3),
-    #     density=SLD_DENSITY[name2][1] * random.uniform(0.7, 1.3),
-    #     roughness=roughness2,
-    #     thickness=thickness2,
-    # )
-    # name3 = "TiN"
-    # thickness3 = random.uniform(*THICKNESS_RANGES["default"])
-    # roughness3 = thickness3 * random.uniform(0, 0.7)
-    # layer3 = Layer(
-    #     name=substrate_name,
-    #     sld=SLD_DENSITY[name3][0] * random.uniform(0.7, 1.3),
-    #     density=SLD_DENSITY[name3][1] * random.uniform(0.7, 1.3),
-    #     roughness=roughness3,
-    #     thickness=thickness3,
-    # )
 
-    # layers = [layer1, layer2, layer3]
-    # return {"substrate": substrate, "layers": layers}
+def make_con_file(global_params, substrate: Substrate, layers: list[Layer]):
+    """Make con file for lsfit."""
 
+    def smart_format(val, precision=6):
+        """적절한 자리수 표현: 너무 크거나 작으면 과학적 표기법 사용"""
 
-def rewrite_con_file(
-    con_lines: list[str], multilayer: dict[str, Substrate | list[Layer]]
-) -> list[str]:
-    """con 파일의 내용을 multilayer에 맞게 수정하는 함수."""
+        if isinstance(val, (float, int)):
+            if val and abs(val) < 1e-2 or abs(val) >= 1e4:
+                return f"{val:.{precision}E}"  # 과학적 표기법
+            return f"{val:.{precision}f}"  # 일반 소수
+        return str(val)
 
-    def replace_value(line: str, new_value: float) -> str:
-        new_str = str(new_value).ljust(7, "0")[:8]
-        return f"{line[:37]}{new_str}      {line.split()[-1]}\n"
+    lines = []
 
-    new_lines = con_lines.copy()
-    substrate = multilayer["substrate"]
-    if substrate.sld is not None:
-        new_lines[8] = replace_value(new_lines[8], substrate.sld)
-    if substrate.roughness is not None:
-        new_lines[9] = replace_value(new_lines[9], substrate.roughness)
-    if substrate.density is not None:
-        new_lines[10] = replace_value(new_lines[10], substrate.density)
+    # Header
+    lines.append("Parameter and refinement control file produced by  program LSFIT")
+    lines.append("DBI G/N Text for X-axis(A20) Text for Y-axis(A20) REP")
+    lines.append("I   N   z  [\\AA]             log(|FT\\{Int\\cdotq_{   1")
+    lines.append("### name of parameter.............  Value          Increment")
 
-    for i, layer in enumerate(multilayer["layers"]):
-        if layer.sld is not None:
-            new_lines[12 + i * 4] = replace_value(new_lines[12 + i * 4], layer.sld)
-        if layer.roughness is not None:
-            new_lines[13 + i * 4] = replace_value(
-                new_lines[13 + i * 4], layer.roughness
+    # Body
+    idx = 1
+    # Global
+    for name, (val, inc) in global_params.items():
+        lines.append(
+            f"{idx:3d} {name:<29}   {smart_format(val):15}{smart_format(inc):12}"
+        )
+        idx += 1
+    # Substrate
+    sub = asdict(substrate)
+    for field in ["sld", "density", "roughness"]:
+        val = sub[field]
+        inc = val * 0.05  # 5% 증분 기본
+        name = f"{substate_param_name[field]:<21}0 part {len(layers)}"
+        lines.append(f"{idx:3d} {name}   {smart_format(val):15}{smart_format(inc):12}")
+        idx += 1
+    lines.append(
+        f"{idx:3d} intensity offset                0.107172E-01  0.8971571E-02"
+    )
+    idx += 1
+    # Layers
+    for i, layer in enumerate(layers, start=1):
+        lay = asdict(layer)
+        for field in ["sld", "density", "roughness", "thickness"]:
+            val = lay[field]
+            inc = val * 0.05 if field != "thickness" else val * 0.01
+            name = f"{layer_param_name[field]:<21}{i} part {len(layers)}"
+            lines.append(
+                f"{idx:3d} {name}   {smart_format(val):15}{smart_format(inc):12}"
             )
-        if layer.density is not None:
-            new_lines[14 + i * 4] = replace_value(new_lines[14 + i * 4], layer.density)
-        if layer.thickness is not None:
-            new_lines[15 + i * 4] = replace_value(
-                new_lines[15 + i * 4], layer.thickness
-            )
+            idx += 1
 
-    return new_lines
+    # Tail
+    lines.append("Parameter Variation pattern  /  selected files :  1111")
+    lines.append(
+        "0        1         2         3         4         5         6         7"
+    )
+    lines.append(
+        "1234567890123456789012345678901234567890123456789012345678901234567890123456789"
+    )
+
+    return [line + "\n" for line in lines]
 
 
 def save_metadata(
@@ -320,67 +172,25 @@ def save_metadata(
         json.dump(metadata, f, indent=4)
 
 
-def run_lsfit(
-    software_dir: Path,
-    save_dir: Path,
-    new_lines: list[str],
-    capture_output: bool = True,
-) -> CompletedProcess[str]:
-    """lsfit 소프트웨어를 실행하는 함수"""
-    shutil.copy(software_dir / "1.dat", save_dir / "1.dat")
-    with open(save_dir / "1.con", "w", encoding="utf-8") as f:
-        f.writelines(new_lines)
-
-    start = (
-        str(save_dir / "1") + "\n"
-    )  # 알부로 틀린 경로를 입력으로 줘봄 이럴떄 프로그램이 멈췄으면 좋겠지만 무한히 기다림림
-    save = "e\ny\ny\ny\n"
-    end = "q"
-    command = start + save + end
-    result = subprocess.run(
-        [software_dir / "lsfit.exe"],
-        cwd=save_dir,
-        input=command,
-        text=True,
-        capture_output=capture_output,
-        check=True,
-        encoding="utf-8",
-        timeout=5,
-    )
-
-    return result.stdout, result.stderr
-    # TODO: To handle the error, we need to check the output and error messages.
-    # process = subprocess.Popen(
-    #     [software_dir / "lsfit.exe"],
-    #     cwd=save_dir,
-    #     stdin=subprocess.PIPE,
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.PIPE,
-    #     text=True
-    # )
-
-    # # 줄 단위로 보내기
-    # for line in [str(save_dir / "111"), "e", "y", "y", "y", "q"]:
-    #     process.stdin.write(line + "\n")
-    #     process.stdin.flush()
-    # stdout, stderr = process.communicate()
-    # print(stdout)
-    # print(stderr)
-
-
 def main() -> None:
     """메인 함수"""
+    global_params = {
+        "footprint in deg": (0.2025540, 0.0082232),
+        "background (-log value)": (0.004, 0.002053),
+        "diffractometer resolution": (5.0000, 0.0977063),
+        "[disp,n*b] reference material": (0.000000, 0.3053987e-2),
+    }
     software_dir = Path(".\\lsfit_software").resolve()
-    save_root = Path("..\\data\\simulation_data").resolve()
+    save_root = Path("..\\data\\simulation_hfo2").resolve()
     save_root.mkdir(exist_ok=True, parents=True)
 
-    with open(software_dir / "1.con", "r", encoding="utf-8") as f:
-        con_lines = f.readlines()
-
-    for run_n in tqdm(range(1, 10001), desc="Generating multilayers"):
-        multilayer = generate_multilayer(min_layers=1, max_layers=3)
-        new_lines = rewrite_con_file(con_lines, multilayer)
-
+    for run_n in tqdm(range(1, 100001), desc="Generating multilayers"):
+        multilayer = generate_multilayer(min_layers=1, max_layers=1)
+        new_lines = make_con_file(
+            global_params,
+            multilayer["substrate"],
+            multilayer["layers"],
+        )
         save_dir = save_root / f"d{run_n:05}"
         # NOTE: More than 8 characters will make error in lsfit
         if len(save_dir.stem) > 8:

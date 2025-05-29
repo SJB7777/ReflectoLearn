@@ -82,8 +82,8 @@ def main():
     data_path = Path("..\\data\\simulation_data")
 
     X_data, y_data = load_data(data_path, range(1, 10001))
-    # history = train_cnn(X_data, y_data, model_path="models/cnn_simulation_model.pth")
-    history = train_mlp(X_data, y_data, model_path="models/mlp_model.pth")
+    history = train_cnn(X_data, y_data, model_path="models/cnn_simulation_model.pth")
+    # history = train_mlp(X_data, y_data, model_path="models/mlp_model.pth")
 
     epochs = range(1, len(history["train_loss"]) + 1)
     plt.plot(epochs, history["train_loss"], label="Train Loss")

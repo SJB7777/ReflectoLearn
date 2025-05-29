@@ -1,0 +1,39 @@
+sub
+Si
+8A SiO2
+
+sub는 +- 10%
+Sio2 += 20%
+Hf +-20 % 전자밀도
+1 - 30 nm
+
+1, 2 layer
+
+beam energy: 9.9892 keV
+
+Si:
+delta: 4.8995e-06
+beta: 7.4105e-08
+sld: 4.899598
+density: 66.116276
+
+SiO2:
+thickness: 8 A
+delta: 461095e-06
+beta: 392993e-08
+sld: 4.610959
+density: 117.329199
+
+Hf:
+thickness: 1-30 A
+delta: 1.95466e-05
+beta: 3.09584
+sld: 19.546587
+density: 6.313819
+
+HfO:
+thickness: 1-30 A
+delta: 1.51298e-05
+beta: 1.9175e-06
+sld: 15.12988
+density: 7.8903
