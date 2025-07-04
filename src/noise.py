@@ -12,4 +12,3 @@ def get_background_noise(count: int, b_min: float, b_max: float) -> np.ndarray:
     """Generate background noise."""
     b = pow(10, np.random.uniform(b_min, b_max))
     return np.random.normal(b, 0.1 * b, count)
-

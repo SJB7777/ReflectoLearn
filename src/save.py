@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 from tqdm import tqdm
 
-from simulate import simulate_xrr_with_noise, make_one_layer_structue, simulate_xrr
+from src.simulate import simulate_xrr_with_noise, make_one_layer_structue, simulate_xrr
 
 
 def main_hdf5(save_file: Path, total: int):
