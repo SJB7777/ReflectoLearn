@@ -16,10 +16,7 @@ def load_data(data_path: Path) -> tuple[np.ndarray, np.ndarray]:
     X_test = data[["XOBS", "YOBS"]].values[:314]
     X_test = fill_nan_with_interp(X_test)[np.newaxis, :, :]
 
-    y_test = np.asarray(parse_con_parameter(con_file))[
-        [4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-    ]
-
+    y_test = np.asarray(parse_con_parameter(con_file))
     return X_test, y_test
 
 

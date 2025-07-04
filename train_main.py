@@ -22,9 +22,7 @@ def load_data(
         x = data[["XOBS", "YCALC"]].values
         x = fill_nan_with_interp(x)
         X_data.append(x)
-        y = np.asarray(parse_con_parameter(con_file))[
-            [4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-        ]
+        y = np.asarray(parse_con_parameter(con_file))
         y_data.append(y)
 
     return np.stack(X_data, axis=0), np.stack(y_data, axis=0)

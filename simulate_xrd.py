@@ -61,9 +61,9 @@ def generate_multilayer(
     sio2_thickness = 8
     sio2_layer = Layer(
         name="SiO2",
-        sld=4.610959 * random.uniform(0.7, 1.3),
-        roughness=random.uniform(0.1, sio2_thickness * 0.3),
-        density=117.329199 * random.uniform(0.7, 1.3),
+        sld=4.610959, # * #random.uniform(0.7, 1.3),
+        roughness=3, # random.uniform(0.1, sio2_thickness * 0.3),
+        density=117.329199, #* random.uniform(0.7, 1.3),
         thickness=sio2_thickness,
     )
 
@@ -181,10 +181,10 @@ def main() -> None:
         "[disp,n*b] reference material": (0.000000, 0.3053987e-2),
     }
     software_dir = Path(".\\lsfit_software").resolve()
-    save_root = Path("..\\data\\simulation_hfo2").resolve()
+    save_root = Path("..\\data\\onelayer").resolve()
     save_root.mkdir(exist_ok=True, parents=True)
 
-    for run_n in tqdm(range(1, 100001), desc="Generating multilayers"):
+    for run_n in tqdm(range(100001, 1000001), desc="Generating multilayers"):
         multilayer = generate_multilayer(min_layers=1, max_layers=1)
         new_lines = make_con_file(
             global_params,
