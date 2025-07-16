@@ -1,0 +1,34 @@
+import random
+
+import numpy as np
+from refnx.reflect import SLD, ReflectModel
+from refnx.reflect.structure import Structure
+
+from ..math_utils import apply_poisson_noise, get_background_noise
+
+
+def make_one_layer_structue(thickness: float, roughness: float, sld: float):
+    air = SLD(0.0, name="Air")
+    oxide = SLD(2.5, name="Oxide")
+    film = SLD(sld, name="Thin Film")
+    substrate = SLD(2.0, name="Substrate")
+
+    structure = air(0, 0) | oxide(20, 2) | film(thickness, roughness) | substrate(0, 3)
+    return structure
+
+
+def simulate_xrr(structure: Structure, q: np.ndarray):
+    model = ReflectModel(structure)
+    R = model(q)
+    return R
+
+
+def simulate_xrr_with_noise(structure: Structure, q: np.ndarray):
+    N = len(q)
+    R = simulate_xrr(structure, q)
+    R_poisson = apply_poisson_noise(R, s=10 ** random.uniform(6, 8))
+    uniform_noise = np.random.uniform(0.7, 1.3, N)
+    background_noise = get_background_noise(N, -7, -4)
+    curve_scaling = np.random.uniform(0.9, 1.1)
+    R_noise = R_poisson * uniform_noise * curve_scaling + background_noise
+    return R_noise

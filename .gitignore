@@ -177,4 +177,4 @@ cython_debug/
 .pylintrc
 
 # Data files
-src/data/
+.results/

@@ -1,0 +1,9 @@
+- Package Manager: uv
+- Style Guide: PEP 8
+- Indentation: Must be compatible with vscode-indent-rainbow (no red marks).
+- Linter: Pylint (not overly strict).
+- General Principles:
+    - Write maintainable and professional code.
+    - Favor functional programming constructs where appropriate.
+    - Adhere to industry best practices.
+    - Keep code simple and avoid unnecessary complexity.

@@ -1,0 +1,82 @@
+import random
+from pathlib import Path
+
+import h5py
+import numpy as np
+import torch
+from tqdm import tqdm
+
+from ..data_processing.simulate import (
+    make_one_layer_structue,
+    simulate_xrr,
+    simulate_xrr_with_noise,
+)
+
+
+def main_hdf5(save_file: Path, total: int):
+    N: int = 100
+    q = np.linspace(0.005, 0.3, N)
+
+    # Create HDF5 file
+    with h5py.File(save_file, "w") as f:
+        # Save q globally at root
+        f.create_dataset("q", data=q.astype("f4"))
+        # Create "samples" group
+        samples_group = f.create_group("samples")
+
+        for i in tqdm(range(total)):
+            thickness = random.uniform(20, 1000)
+            roughness = max(random.uniform(0, 100), thickness * 0.4)
+            sld = random.uniform(1.0, 14.0)
+
+            structure = make_one_layer_structue(thickness, roughness, sld)
+            R = simulate_xrr(structure, q)
+
+            sample_name = f"sample_{i:06d}"
+            g = samples_group.create_group(sample_name)
+
+            # Create dataset for R
+            g.create_dataset("R", data=R.astype("f4"))
+
+            # Save metadata as attributes
+            g.attrs["thickness"] = thickness
+            g.attrs["roughness"] = roughness
+            g.attrs["sld"] = sld
+
+
+def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
+    if not {"q", "Rs", "params"}.issubset(data.keys()):
+        raise ValueError("Data must contain 'q', 'Rs', and 'params' keys.")
+
+    with h5py.File(save_file, "w") as f:
+        f.create_dataset("q", data=data["q"].astype("f4"))
+        samples_group = f.create_group("samples")
+
+        for i in tqdm(range(data["Rs"].shape[0]), desc="Saving samples"):
+            R = data["Rs"][i]
+            thickness, roughness, sld = data["params"][i]
+
+            sample_name = f"sample_{i:06d}"
+            g = samples_group.create_group(sample_name)
+
+            g.create_dataset("R", data=R.astype("f4"))
+            g.attrs["thickness"] = thickness
+            g.attrs["roughness"] = roughness
+            g.attrs["sld"] = sld
+
+
+def save_model(model_state_dict: dict, save_path: Path):
+    """Saves the model's state dictionary to the specified path."""
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(model_state_dict, save_path)
+
+
+def main() -> None:
+    save_dir = Path("X:/XRR_AI/hdf5_XRR")
+    if not save_dir.exists():
+        save_dir.mkdir(parents=True)
+    main_hdf5(save_dir / "100p_paper.h5", total=10)
+
+
+if __name__ == "__main__":
+    main()
