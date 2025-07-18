@@ -7,7 +7,8 @@ import torch
 from tqdm import tqdm
 
 from ..data_processing.simulate import (
-    make_one_layer_structue,
+    make_one_layer_structure,
+    make_structure_2l,
     simulate_xrr,
     simulate_xrr_with_noise,
 )
@@ -29,7 +30,13 @@ def main_hdf5(save_file: Path, total: int):
             roughness = max(random.uniform(0, 100), thickness * 0.4)
             sld = random.uniform(1.0, 14.0)
 
-            structure = make_one_layer_structue(thickness, roughness, sld)
+            # structure = make_one_layer_structue(thickness, roughness, sld)
+            thickness2 = random.uniform(20, 1000)
+            roughness2 = max(random.uniform(0, 100), thickness * 0.4)
+            sld2 = random.uniform(1.0, 14.0)
+            structure = make_structure_2l(
+                thickness, roughness, sld, thickness2, roughness2, sld2
+            )
             R = simulate_xrr(structure, q)
 
             sample_name = f"sample_{i:06d}"
@@ -42,6 +49,10 @@ def main_hdf5(save_file: Path, total: int):
             g.attrs["thickness"] = thickness
             g.attrs["roughness"] = roughness
             g.attrs["sld"] = sld
+
+            g.attrs["thickness2"] = thickness2
+            g.attrs["roughness2"] = roughness2
+            g.attrs["sld2"] = sld2
 
 
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
@@ -75,7 +86,7 @@ def main() -> None:
     save_dir = Path("X:/XRR_AI/hdf5_XRR")
     if not save_dir.exists():
         save_dir.mkdir(parents=True)
-    main_hdf5(save_dir / "100p_paper.h5", total=10)
+    main_hdf5(save_dir / "p100o6_2_raw.h5", total=500_000)
 
 
 if __name__ == "__main__":

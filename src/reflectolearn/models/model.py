@@ -2,9 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from reflectolearn.types import ModelType
+
 
 class XRRRegressor(nn.Module):
-    def __init__(self):
+    def __init__(self, output_length=3):
         super(XRRRegressor, self).__init__()
 
         # 1D CNN feature extractor
@@ -20,7 +22,7 @@ class XRRRegressor(nn.Module):
 
         # Fully connected regression head
         self.fc1 = nn.Linear(32, 16)
-        self.fc2 = nn.Linear(16, 3)  # Output: sld, thickness, roughness
+        self.fc2 = nn.Linear(16, output_length)  # Output: sld, thickness, roughness...
 
     def forward(self, x):
         # x: (batch_size, input_length) → reshape to (batch_size, 1, input_length)
@@ -34,7 +36,7 @@ class XRRRegressor(nn.Module):
 
 
 class XRRHybridRegressor(nn.Module):
-    def __init__(self, input_length):
+    def __init__(self, input_length, output_length=3):
         super(XRRHybridRegressor, self).__init__()
 
         # Multi-kernel 1D CNN for multi-scale fringe feature capture
@@ -60,7 +62,7 @@ class XRRHybridRegressor(nn.Module):
         self.final_fc = nn.Sequential(
             nn.Linear(48 + 128, 64),
             nn.ReLU(),
-            nn.Linear(64, 3),  # sld, thickness, roughness
+            nn.Linear(64, output_length),  # sld, thickness, roughness
         )
 
     def forward(self, x):
@@ -84,13 +86,15 @@ class XRRHybridRegressor(nn.Module):
         return out
 
 
-def get_model(name: str, input_length: int = None) -> nn.Module:
-    match name.lower():
-        case "hybrid":
+def get_model(
+    model_type: ModelType, input_length: int = None, output_length: int = 6
+) -> nn.Module:
+    match model_type:
+        case ModelType.HYBRID:
             if input_length is None:
                 raise ValueError("input_length is required for hybrid model")
-            return XRRHybridRegressor(input_length)
-        case "regressor":
-            return XRRRegressor()
+            return XRRHybridRegressor(input_length, output_length)
+        case ModelType.REGRESSOR:
+            return XRRRegressor(output_length)
         case _:
-            raise ValueError(f"Unknown model type: {name}")
+            raise ValueError(f"Unknown model type: {model_type.name}")

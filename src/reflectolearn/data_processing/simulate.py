@@ -7,13 +7,37 @@ from refnx.reflect.structure import Structure
 from ..math_utils import apply_poisson_noise, get_background_noise
 
 
-def make_one_layer_structue(thickness: float, roughness: float, sld: float):
+def make_one_layer_structure(thickness: float, roughness: float, sld: float):
     air = SLD(0.0, name="Air")
     oxide = SLD(2.5, name="Oxide")
     film = SLD(sld, name="Thin Film")
     substrate = SLD(2.0, name="Substrate")
 
     structure = air(0, 0) | oxide(20, 2) | film(thickness, roughness) | substrate(0, 3)
+    return structure
+
+
+def make_structure_2l(
+    thickness1: float,
+    roughness1: float,
+    sld1: float,
+    thickness2: float,
+    roughness2: float,
+    sld2: float,
+):
+    air = SLD(0.0, name="Air")
+    oxide = SLD(2.5, name="Oxide")
+    film1 = SLD(sld1, name="Thin Film")
+    film2 = SLD(sld2, name="Thin Film2")
+    substrate = SLD(2.0, name="Substrate")
+
+    structure = (
+        air(0, 0)
+        | oxide(20, 2)
+        | film2(thickness2, roughness2)
+        | film1(thickness1, roughness1)
+        | substrate(0, 3)
+    )
     return structure
 
 

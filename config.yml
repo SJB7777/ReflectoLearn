@@ -1,18 +1,19 @@
 data:
-  raw_data_dir: "X:/XRR_AI/hdf5_XRR/raw_data"
-  processed_data_dir: "X:/XRR_AI/hdf5_XRR/preprocessed_data"
-  file_name: "p100o3.h5"
-  version: "q4"
+  data_dir: "X:/XRR_AI/hdf5_XRR/data"
+  file_name: "p100o6_2"
+  version: "raw"
 
 results:
   output_dir: "results"
   model_dir: "results/models"
+  scaler_dir: "results/scaler"
+  stats_dir: "results/stats"
   figure_dir: "results/figures"
 
 training:
   batch_size: 256
   learning_rate: 0.001
-  num_epochs: 150
+  num_epochs: 200
   patience: 50
   random_seed: 42
 

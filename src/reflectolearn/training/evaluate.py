@@ -6,9 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..models.model import XRRHybridRegressor
-from ..math_utils import normalize, q_fourier_transform_multisample
 from ..io.read import get_data
+from ..math_utils import normalize, q_fourier_transform_multisample
+from ..models.model import XRRHybridRegressor
 from ..visualization import (
     plot_3d_scatter,
     plot_best_worst_fits,

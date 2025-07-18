@@ -5,7 +5,7 @@ from tqdm import tqdm
 from .functional import batch_indices
 
 
-def normalize(arr: np.ndarray) -> np.ndarray:
+def normalize(arr: np.ndarray | torch.Tensor) -> np.ndarray:
     """Nornalize a NumPy array to mean 0, std 1."""
     return (arr - arr.mean()) / arr.std()
 
