@@ -19,7 +19,6 @@ from reflectolearn.types import ModelType
 from scripts.config import load_config
 
 
-
 def set_seed(seed: int):
     np.random.seed(seed)
     torch.manual_seed(seed)
