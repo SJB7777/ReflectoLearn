@@ -76,6 +76,32 @@ def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
             g.attrs["sld"] = sld
 
 
+def main_hdf5_nlayer(save_file: Path, total: int, n_layers: int):
+    from ..data_processing.simulate import simulate_xrr
+    N = 100
+    q = np.linspace(0.005, 0.3, N)
+
+    with h5py.File(save_file, "w") as f:
+        f.create_dataset("q", data=q.astype("f4"))
+        samples_group = f.create_group("samples")
+
+        for i in tqdm(range(total), desc="Generating samples"):
+            thicknesses, roughnesses, slds = random_layer_parameters(n_layers)
+            structure = make_n_layer_structure(thicknesses, roughnesses, slds)
+            R = simulate_xrr(structure, q)
+
+            g = samples_group.create_group(f"sample_{i:06d}")
+            g.create_dataset("R", data=R.astype("f4"))
+
+            # metadata 저장
+            g.attrs["n_layers"] = n_layers
+            for j in range(n_layers):
+                g.attrs[f"thickness_{j}"] = thicknesses[j]
+                g.attrs[f"roughness_{j}"] = roughnesses[j]
+                g.attrs[f"sld_{j}"] = slds[j]
+
+
+
 def save_model(model_state_dict: dict, save_path: Path):
     """Saves the model's state dictionary to the specified path."""
     save_path.parent.mkdir(parents=True, exist_ok=True)

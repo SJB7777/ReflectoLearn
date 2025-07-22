@@ -1,12 +1,9 @@
-import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from loguru import logger
 
 from reflectolearn.data_processing.preprocess import preprocess_file
-from scripts.config import load_config
+from reflectolearn.config import load_config
 
 
 def main():

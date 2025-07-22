@@ -1,7 +1,4 @@
-import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import joblib
 import numpy as np
@@ -16,7 +13,7 @@ from reflectolearn.io.save import save_model
 from reflectolearn.models.model import get_model
 from reflectolearn.training.train import train_model
 from reflectolearn.types import ModelType
-from scripts.config import load_config
+from reflectolearn.config import load_config
 
 
 def set_seed(seed: int):

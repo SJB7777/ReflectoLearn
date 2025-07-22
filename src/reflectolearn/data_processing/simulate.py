@@ -1,7 +1,7 @@
 import random
 
 import numpy as np
-from refnx.reflect import SLD, ReflectModel
+from refnx.reflect import SLD, ReflectModel, Stack
 from refnx.reflect.structure import Structure
 
 from ..math_utils import apply_poisson_noise, get_background_noise
@@ -14,6 +14,27 @@ def make_one_layer_structure(thickness: float, roughness: float, sld: float):
     substrate = SLD(2.0, name="Substrate")
 
     structure = air(0, 0) | oxide(20, 2) | film(thickness, roughness) | substrate(0, 3)
+    return structure
+
+
+def make_n_layer_structure(
+    thicknesses: list[float],
+    roughnesses: list[float],
+    slds: list[float],
+    repeats: int = 1
+) -> Structure:
+    # 기본 매질 정의
+    air = SLD(0.0, name="Air")
+    substrate = SLD(2.0, name="Substrate")
+
+    # Stack을 이용한 반복 구조 생성
+    multilayer = Stack(name="Multilayer", repeats=repeats)
+    for t, r, s in zip(thicknesses, roughnesses, slds):
+        film = SLD(s, name=f"Film SLD={s}")
+        multilayer.append(film(t, r))
+
+    # Structure 조립
+    structure = air(0, 0) | multilayer | substrate(0, 3)
     return structure
 
 

@@ -1,7 +1,4 @@
-import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import joblib
 import numpy as np
@@ -12,7 +9,7 @@ from reflectolearn import visualization as viz
 from reflectolearn.data_processing.preprocess import preprocess_features
 from reflectolearn.io.read import get_data
 from reflectolearn.models.model import get_model
-from scripts.config import load_config
+from reflectolearn.config import load_config
 
 
 def load_evaluation_assets():
