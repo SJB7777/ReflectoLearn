@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..io.read import get_data
+from ..io import get_data
 from ..math_utils import normalize, q_fourier_transform_multisample
 from ..models.model import XRRHybridRegressor
 from ..visualization import (

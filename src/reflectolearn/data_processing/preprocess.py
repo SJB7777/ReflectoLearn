@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from ..io.read import get_data
-from ..io.save import xrd2hdf5
+from ..io import get_data
+from ..io import xrd2hdf5
 from ..math_utils import normalize, q_fourier_transform_multisample_gpu
 
 

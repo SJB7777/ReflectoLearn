@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.data_processing.preprocess import load_and_preprocess_data
-from reflectolearn.io.save import save_model
+from reflectolearn.io import save_model
 from reflectolearn.models.model import get_model
 from reflectolearn.training.train import train_model
 from reflectolearn.types import ModelType
@@ -56,33 +56,33 @@ def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: i
 
 def main():
     logger.info("Starting training script")
-    config = load_config(Path("config.yml"))
+    config = load_config()
     logger.info(f"Config: {config}")
-    seed = config["training"]["random_seed"]
+    seed = config.training.seed
     set_seed(seed)
 
     device, num_workers = get_device_and_workers()
     logger.info(f"Using device: {device}")
 
-    raw_name = Path(config["data"]["file_name"]).stem
-    data_version = config["data"]["version"]
+    raw_name = config.data.input_file.stem
+    data_version = config.project.type
 
-    data_file = Path(config["data"]["data_dir"]) / f"{raw_name}_{data_version}.h5"
+    data_file = Path(config.data.data_dir) / f"{raw_name}_{data_version}.h5"
 
     x_all, y_all_scaled, scaler = load_and_preprocess_data(
-        data_file, config["data"]["version"]
+        data_file, config.project.type
     )
 
     train_loader, val_loader = prepare_dataloaders(
         x_all,
         y_all_scaled,
-        batch_size=config["training"]["batch_size"],
+        batch_size=config.training.batch_size,
         seed=seed,
         num_workers=num_workers,
     )
 
-    model_name = config["model"]["type"]
-    lr = config["training"]["learning_rate"]
+    model_name = config.model.name
+    lr = config.training.learning_rate
     model = get_model(
         model_type=ModelType.from_str(model_name),
         input_length=x_all.shape[1],
@@ -100,33 +100,28 @@ def main():
         optimizer,
         loss_fn,
         device,
-        num_epochs=config["training"]["num_epochs"],
-        patience=config["training"]["patience"],
+        num_epochs=config.training.epochs,
+        patience=config.training.patience,
     )
     logger.info("Model training finished.")
-
-    # === Naming Convention ===
-    tag = f"{model_name}__{data_version}__seed{seed}__lr{lr:.0e}"
     # === Directories ===
-    model_dir = Path(config["results"]["model_dir"])
-    scaler_dir = Path(config["results"]["scaler_dir"])
-    stats_dir = Path(config["results"]["stats_dir"])
+    result_dir = config.project.output_dir
 
-    for d in [model_dir, scaler_dir, stats_dir]:
+    for d in [result_dir, result_dir, result_dir]:
         d.mkdir(parents=True, exist_ok=True)
 
     # === Save model ===
-    model_path = model_dir / f"{tag}.pt"
+    model_path = result_dir / "model.pt"
     save_model(model.state_dict(), model_path)
     logger.info(f"Best model saved to {model_path}")
 
     # === Save scaler ===
-    scaler_path = scaler_dir / f"{tag}.scaler.pkl"
+    scaler_path = result_dir / "scaler.pkl"
     joblib.dump(scaler, scaler_path)
     logger.info(f"Scaler saved to {scaler_path}")
 
     # === Save training curves ===
-    stats_path = stats_dir / f"{tag}.stats.npz"
+    stats_path = result_dir / "stats.npz"
     np.savez(
         stats_path,
         train_losses=np.array(train_losses),

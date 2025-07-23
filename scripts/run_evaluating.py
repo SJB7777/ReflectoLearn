@@ -7,7 +7,7 @@ from loguru import logger
 
 from reflectolearn import visualization as viz
 from reflectolearn.data_processing.preprocess import preprocess_features
-from reflectolearn.io.read import get_data
+from reflectolearn.io import get_data
 from reflectolearn.models.model import get_model
 from reflectolearn.config import load_config
 
@@ -15,42 +15,37 @@ from reflectolearn.config import load_config
 def load_evaluation_assets():
     """모델, 스케일러, 평가 데이터, 학습 곡선을 불러옵니다."""
 
-    config = load_config(Path("config.yml"))
-    model_name = config["model"]["type"]
-    seed = config["training"]["random_seed"]
-    lr = config["training"]["learning_rate"]
-    data_version = config["data"]["version"]
-    tag = f"{model_name}__{data_version}__seed{seed}__lr{lr:.0e}"
+    config = load_config()
+    model_name = config.model
 
-    model_path = Path(config["results"]["model_dir"]) / f"{tag}.pt"
-    raw_name = Path(config["data"]["file_name"]).stem
-    scaler_path = Path(config["results"]["scaler_dir"]) / f"{tag}.scaler.pkl"
-    stats_path = Path(config["results"]["stats_dir"]) / f"{tag}.stats.npz"
+    output_root: Path = config.project.output_dir
+    model_file: Path = output_root / "model.pt"
+    scaler_file: Path = output_root / "scaler.pkl"
+    stats_file: Path = output_root / "stats.npz"
+    data_file: Path = config.data.input_file
 
-    data_path = Path(config["data"]["data_dir"]) / f"{raw_name}_{data_version}.h5"
-
-    logger.info(f"[INFO] Loading model from: {model_path}")
-    logger.info(f"[INFO] Loading scaler from: {scaler_path}")
-    logger.info(f"[INFO] Loading stats from: {stats_path}")
-    logger.info(f"[INFO] Loading data from: {data_path}")
+    logger.info(f"[INFO] Loading model from: {model_file}")
+    logger.info(f"[INFO] Loading scaler from: {scaler_file}")
+    logger.info(f"[INFO] Loading stats from: {stats_file}")
+    logger.info(f"[INFO] Loading data from: {data_file}")
 
     # Load scaler
-    scaler = joblib.load(scaler_path)
+    scaler = joblib.load(scaler_file)
 
     # Load training statistics
-    stats = np.load(stats_path)
+    stats = np.load(stats_file)
     train_losses = stats["train_losses"]
     val_losses = stats["val_losses"]
 
     # Load evaluation data
-    data = get_data(data_path)
-    x_val = preprocess_features(config["data"]["version"], data)
+    data = get_data(data_file)
+    x_val = preprocess_features(config.project.type, data)
     y_val_orig = data["params"]
 
     # Load model
     model = get_model(model_name, input_length=x_val.shape[1])
     model.load_state_dict(
-        torch.load(model_path, map_location="cpu"),
+        torch.load(model_file, map_location="cpu"),
     )
     model.eval()
 
