@@ -76,7 +76,7 @@ def main():
         seed=seed,
         num_workers=num_workers,
     )
-    
+
     input_length: int = x_all.shape[1]
     output_length: int = y_all_scaled.shape[1]
     logger.info(f"Input length: {input_length}")

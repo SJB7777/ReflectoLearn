@@ -9,6 +9,7 @@ from ..io import xrd2hdf5
 from ..math_utils import normalize, q_fourier_transform_multisample_gpu
 from ..types import DataVersion
 
+
 def preprocess_features(data_version: DataVersion, raw_data: dict) -> torch.Tensor:
     reflectivity = torch.tensor(raw_data["Rs"], dtype=torch.float32)
 

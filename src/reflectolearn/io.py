@@ -121,7 +121,9 @@ def get_data(path: Path):
             n_layer += 1
 
         if n_layer == 0:
-            raise ValueError("Could not determine n_layer from HDF5 attributes. 'thickness_0' not found.")
+            raise ValueError(
+                "Could not determine n_layer from HDF5 attributes. 'thickness_0' not found."
+            )
 
         # Iterate through each sample group
         for sample_name in tqdm(f["samples"], desc="Loading samples"):
@@ -138,8 +140,4 @@ def get_data(path: Path):
             params.append(current_sample_params)
 
     # Convert lists to numpy arrays for consistent output
-    return {
-        "q": np.array(q),
-        "Rs": np.array(Rs),
-        "params": np.array(params)
-    }
+    return {"q": np.array(q), "Rs": np.array(Rs), "params": np.array(params)}

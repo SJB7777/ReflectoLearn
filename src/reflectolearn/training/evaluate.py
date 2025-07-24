@@ -59,7 +59,9 @@ def main():
 
     # Load model
     model = XRRHybridRegressor(input_length=x_val.shape[1])
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(
+        torch.load(model_path, map_location=device, weights_only=True)
+    )
     model.to(device)
 
     # Evaluate

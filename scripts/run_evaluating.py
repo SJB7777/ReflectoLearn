@@ -17,7 +17,6 @@ def load_evaluation_assets():
 
     config = load_config()
 
-
     output_root: Path = config.project.output_dir
     model_file: Path = output_root / "model.pt"
     scaler_file: Path = output_root / "scaler.pkl"
@@ -39,13 +38,21 @@ def load_evaluation_assets():
 
     # Load evaluation data
     data = get_data(data_file)
-    x_val = preprocess_features(config.project.version, data)
-    y_val_orig = data["params"]
+    x_val: torch.Tensor = preprocess_features(config.project.version, data)
+    y_val_orig: np.ndarray = data["params"]
 
     # Load model
-    model = get_model(config.model.type, input_length=x_val.shape[1])
+    input_length: int = x_val.shape[1]
+    output_length: int = y_val_orig.shape[1]
+    logger.info(f"Input Length: {input_length}")
+    logger.info(f"Input Length: {output_length}")
+    model = get_model(
+        config.model.type,
+        input_length=input_length,
+        output_length=output_length,
+    )
     model.load_state_dict(
-        torch.load(model_file, map_location="cpu"),
+        torch.load(model_file, map_location="cpu", weights_only=True),
     )
     model.eval()
 
@@ -53,21 +60,31 @@ def load_evaluation_assets():
 
 
 def evaluate_and_visualize():
-    PARAM_NAMES = ["roughness", "sld", "thickness"]
-
     model, scaler, x_val, y_val_orig, train_losses, val_losses = (
         load_evaluation_assets()
     )
+
+    # ✅ 추정된 출력 파라미터 수
+    n_outputs = y_val_orig.shape[1]
+    if n_outputs % 3 != 0:
+        raise ValueError(f"출력 파라미터 수({n_outputs})가 3의 배수가 아닙니다.")
+
+    n_layer = n_outputs // 3
+    param_names = [
+        f"{param}_{i}"
+        for i in range(n_layer)
+        for param in ("roughness", "sld", "thickness")
+    ]
 
     with torch.no_grad():
         y_pred_normalized = model(x_val).numpy()
     y_pred_orig = scaler.inverse_transform(y_pred_normalized)
 
     viz.plot_losses(train_losses, val_losses)
-    viz.plot_r2_scores(y_val_orig, y_pred_orig, PARAM_NAMES)
+    viz.plot_r2_scores(y_val_orig, y_pred_orig, param_names)
     viz.plot_best_worst_fits(x_val, y_val_orig, y_pred_orig, top_n=3)
-    viz.plot_residuals(y_val_orig, y_pred_orig, PARAM_NAMES)
-    viz.plot_error_histograms(y_val_orig, y_pred_orig, PARAM_NAMES)
+    viz.plot_residuals(y_val_orig, y_pred_orig, param_names)
+    viz.plot_error_histograms(y_val_orig, y_pred_orig, param_names)
 
 
 if __name__ == "__main__":

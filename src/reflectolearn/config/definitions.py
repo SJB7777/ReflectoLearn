@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from ..types import ModelType, DataVersion
 
+
 class ProjectConfig(BaseModel):
     """
     Configuration for the project, including run ID and output directory.
@@ -25,7 +26,9 @@ class DataConfig(BaseModel):
     Configuration for data paths and related parameters.
     """
 
-    data_root: Path = Field(..., description="Directory containing the input data files")
+    data_root: Path = Field(
+        ..., description="Directory containing the input data files"
+    )
     data_file: Path = Field(..., description="Path to the input data file")
 
 
@@ -38,14 +41,20 @@ class TrainingConfig(BaseModel):
     epochs: int = Field(100, description="Number of epochs for training")
     learning_rate: float = Field(0.001, description="Learning rate for the optimizer")
     seed: int = Field(42, description="Random seed for reproducibility")
-    patience: int = Field(50, description="Number of epochs to wait for improvement before stopping training (Early Stopping)")
+    patience: int = Field(
+        50,
+        description="Number of epochs to wait for improvement before stopping training (Early Stopping)",
+    )
 
 
 class ModelConfig(BaseModel):
     """
     Configuration for the model architecture and parameters.
     """
-    type: ModelType = Field(..., description="Type of the model (e.g., 'hybrid', 'cnn')")
+
+    type: ModelType = Field(
+        ..., description="Type of the model (e.g., 'hybrid', 'cnn')"
+    )
 
 
 class ExpConfig(BaseModel):
