@@ -71,8 +71,8 @@ project:
   output_dir: "results/${project.run_id}"
 
 data:
-  data_dir: "D:/XRR_AI/hdf5_XRR/data" # Example directory
-  input_file: "${data.data_dir}/p100o9.h5"
+  data_root: "D:/XRR_AI/hdf5_XRR/data" # Example directory
+  data_file: "${data.data_root}/p100o9.h5"
   output_root: "results/${project.run_id}"
 
 training:

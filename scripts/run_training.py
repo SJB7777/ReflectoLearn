@@ -12,7 +12,6 @@ from reflectolearn.data_processing.preprocess import load_and_preprocess_data
 from reflectolearn.io import save_model
 from reflectolearn.models.model import get_model
 from reflectolearn.training.train import train_model
-from reflectolearn.types import ModelType
 from reflectolearn.config import load_config
 
 
@@ -64,13 +63,10 @@ def main():
     device, num_workers = get_device_and_workers()
     logger.info(f"Using device: {device}")
 
-    raw_name = config.data.input_file.stem
-    data_version = config.project.type
-
-    data_file = Path(config.data.data_dir) / f"{raw_name}_{data_version}.h5"
+    data_file = config.data.data_file
 
     x_all, y_all_scaled, scaler = load_and_preprocess_data(
-        data_file, config.project.type
+        data_file, config.project.version
     )
 
     train_loader, val_loader = prepare_dataloaders(
@@ -80,16 +76,18 @@ def main():
         seed=seed,
         num_workers=num_workers,
     )
-
-    model_name = config.model.name
-    lr = config.training.learning_rate
+    
+    input_length: int = x_all.shape[1]
+    output_length: int = y_all_scaled.shape[1]
+    logger.info(f"Input length: {input_length}")
+    logger.info(f"Input length: {output_length}")
     model = get_model(
-        model_type=ModelType.from_str(model_name),
-        input_length=x_all.shape[1],
-        output_length=y_all_scaled.shape[1],
+        model_type=config.model.type,
+        input_length=input_length,
+        output_length=output_length,
     ).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
     loss_fn = nn.MSELoss()
 
     logger.info("Starting model training...")
@@ -132,4 +130,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Application failed with error: {e}", exc_info=True)
+        raise

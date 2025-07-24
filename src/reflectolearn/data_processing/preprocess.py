@@ -7,19 +7,19 @@ from sklearn.preprocessing import StandardScaler
 from ..io import get_data
 from ..io import xrd2hdf5
 from ..math_utils import normalize, q_fourier_transform_multisample_gpu
+from ..types import DataVersion
 
-
-def preprocess_features(version: str, raw_data: dict) -> torch.Tensor:
+def preprocess_features(data_version: DataVersion, raw_data: dict) -> torch.Tensor:
     reflectivity = torch.tensor(raw_data["Rs"], dtype=torch.float32)
 
-    match version:
-        case "raw":
+    match data_version:
+        case DataVersion.RAW:
             features = torch.log10(reflectivity + 1e-8)
-        case "q4":
+        case DataVersion.Q4:
             q_values = torch.tensor(raw_data["q"], dtype=torch.float32)
             features = q_values**4 * reflectivity
             features = torch.log10(features + 1e-8)
-        case "fourier":
+        case DataVersion.FOURIER:
             z_axis = torch.linspace(0, 500, 2048, dtype=torch.float32)
             ft_result = q_fourier_transform_multisample_gpu(
                 reflectivity, raw_data["q"], z_axis
@@ -27,7 +27,7 @@ def preprocess_features(version: str, raw_data: dict) -> torch.Tensor:
             features = torch.abs(ft_result) ** 2
             features = torch.log10(features + 1e-8)
         case _:
-            raise ValueError(f"Unsupported preprocessing version: {version}")
+            raise ValueError(f"Unsupported preprocessing version: {data_version}")
 
     return normalize(features)
 

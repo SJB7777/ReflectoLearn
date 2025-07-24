@@ -16,13 +16,13 @@ def load_evaluation_assets():
     """모델, 스케일러, 평가 데이터, 학습 곡선을 불러옵니다."""
 
     config = load_config()
-    model_name = config.model
+
 
     output_root: Path = config.project.output_dir
     model_file: Path = output_root / "model.pt"
     scaler_file: Path = output_root / "scaler.pkl"
     stats_file: Path = output_root / "stats.npz"
-    data_file: Path = config.data.input_file
+    data_file: Path = config.data.data_file
 
     logger.info(f"[INFO] Loading model from: {model_file}")
     logger.info(f"[INFO] Loading scaler from: {scaler_file}")
@@ -39,11 +39,11 @@ def load_evaluation_assets():
 
     # Load evaluation data
     data = get_data(data_file)
-    x_val = preprocess_features(config.project.type, data)
+    x_val = preprocess_features(config.project.version, data)
     y_val_orig = data["params"]
 
     # Load model
-    model = get_model(model_name, input_length=x_val.shape[1])
+    model = get_model(config.model.type, input_length=x_val.shape[1])
     model.load_state_dict(
         torch.load(model_file, map_location="cpu"),
     )

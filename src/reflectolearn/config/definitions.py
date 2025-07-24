@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from ..types import ModelType, DataVersion
 
 class ProjectConfig(BaseModel):
     """
@@ -14,7 +15,7 @@ class ProjectConfig(BaseModel):
     """
 
     name: str = Field(..., description="Name of the project")
-    type: str = Field(..., description="Type of the project")
+    version: DataVersion = Field(..., description="Type of the project")
     run_id: str = Field(..., description="Unique identifier for the experiment run")
     output_dir: Path = Field(..., description="Directory where results will be saved")
 
@@ -24,8 +25,8 @@ class DataConfig(BaseModel):
     Configuration for data paths and related parameters.
     """
 
-    data_dir: Path = Field(..., description="Directory containing the input data files")
-    input_file: Path = Field(..., description="Path to the input data file")
+    data_root: Path = Field(..., description="Directory containing the input data files")
+    data_file: Path = Field(..., description="Path to the input data file")
 
 
 class TrainingConfig(BaseModel):
@@ -44,8 +45,7 @@ class ModelConfig(BaseModel):
     """
     Configuration for the model architecture and parameters.
     """
-
-    name: str = Field(..., description="Type of the model (e.g., 'hybrid', 'cnn')")
+    type: ModelType = Field(..., description="Type of the model (e.g., 'hybrid', 'cnn')")
 
 
 class ExpConfig(BaseModel):

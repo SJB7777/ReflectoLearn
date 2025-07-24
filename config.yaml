@@ -1,12 +1,12 @@
 project:
   name: "p100o9"
-  type: "raw"
-  run_id: "${project.name}_${project.type}_${model.name}"
+  version: "raw"
+  run_id: "${project.name}_${project.version}_${model.type}"
   output_dir: "results/${project.run_id}"
 
 data:
-  data_dir: "X:/XRR_AI/hdf5_XRR/data"
-  input_file: "${data.data_dir}/p100o9_raw.h5"
+  data_root: "X:/XRR_AI/hdf5_XRR/data"
+  data_file: "${data.data_root}/p100o9_raw.h5"
 
 training:
   batch_size: 256
@@ -16,4 +16,4 @@ training:
   patience: 50
 
 model:
-  name: "hybrid"
+  type: "hybrid"

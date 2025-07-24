@@ -1,9 +1,16 @@
+# Python Development Guidelines
+
+## Environment
+- Shell: PowerShell
 - Package Manager: uv
+- Linter: Pylint (not overly strict)
+
+## Code Style
 - Style Guide: PEP 8
-- Indentation: Must be compatible with vscode-indent-rainbow (no red marks).
-- Linter: Pylint (not overly strict).
-- General Principles:
-    - Write maintainable and professional code.
-    - Favor functional programming constructs where appropriate.
-    - Adhere to industry best practices.
-    - Keep code simple and avoid unnecessary complexity.
+- Indentation: Compatible with vscode-indent-rainbow (no red marks)
+- Comments: Focus on explaining the role/purpose, not the obvious
+- Keep code simple and maintainable
+- Favor functional programming where appropriate
+
+## Personal Context
+- Interest in mathematics, physics and computer science (relevant for problem-solving approaches)

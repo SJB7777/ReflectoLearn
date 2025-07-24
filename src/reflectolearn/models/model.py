@@ -89,6 +89,8 @@ class XRRHybridRegressor(nn.Module):
 def get_model(
     model_type: ModelType, input_length: int = None, output_length: int = 6
 ) -> nn.Module:
+    if not isinstance(model_type, ModelType):
+        raise TypeError(f"model_typle should be an instance of {ModelType.__name__} not {type(model_type)}")
     match model_type:
         case ModelType.HYBRID:
             if input_length is None:
@@ -97,4 +99,4 @@ def get_model(
         case ModelType.REGRESSOR:
             return XRRRegressor(output_length)
         case _:
-            raise ValueError(f"Unknown model type: {model_type.name}")
+            raise ValueError(f"Unknown model type: {model_type}")

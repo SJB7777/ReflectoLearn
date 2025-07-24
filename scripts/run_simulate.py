@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from loguru import logger
 import numpy as np
 import h5py
 from tqdm import tqdm
@@ -43,15 +44,26 @@ def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int):
 
 def main():
 
+    logger.info("Starting XRR simulation")
+
     config = load_config()
+    logger.info("Configuration loaded successfully")
 
     N: int = 100
     n_sample: int = 1_000_000
     n_layer: int = 3
     q = np.linspace(0.03, 0.3, N)
 
-    data_file: Path = config.data.input_file
+    logger.info(f"Simulation parameters: N={N}, n_sample={n_sample:_}, n_layer={n_layer}")
+    logger.info(f"Q range: {q[0]:.3f} to {q[-1]:.3f}")
+
+    data_file: Path = config.data.data_file
+    logger.info(f"Output file: {data_file}")
+
+    logger.info("Generating XRR data...")
     make_xrr_hdf5(save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample)
+
+    logger.info("XRR simulation data saved successfully")
 
 
 if __name__ == "__main__":
