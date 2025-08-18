@@ -10,6 +10,10 @@ from ..math_utils import normalize, q_fourier_transform_multisample_gpu
 from ..types import DataVersion
 
 
+def log_q4(R: np.ndarray, q: np.ndarray):
+    return np.log10(R * np.pow(q, 4))
+
+
 def preprocess_features(data_version: DataVersion, raw_data: dict) -> torch.Tensor:
     reflectivity = torch.tensor(raw_data["Rs"], dtype=torch.float32)
 

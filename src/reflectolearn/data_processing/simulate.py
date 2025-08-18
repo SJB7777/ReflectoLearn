@@ -12,15 +12,37 @@ def make_parameters(n: int):
     roughnesses: list[float] = []
     slds: list[float] = []
     for _ in range(n):
-        thickness = random.uniform(20, 1000)
-        roughness = max(random.uniform(0, 100), thickness * 0.4)
-        sld = random.uniform(1.0, 14.0)
+        max_thick = 100
+        thickness = random.uniform(20, max_thick)
+        roughness = random.uniform(0, thickness * 0.1)
+        sld = random.uniform(1.0, 3.0)
 
         thicknesses.append(thickness)
         roughnesses.append(roughness)
         slds.append(sld)
 
     return thicknesses, roughnesses, slds
+
+
+def make_multifilm(n_layer: int, q: np.ndarray, add_noise=True):
+
+    thicknesses, roughnesses, slds = make_parameters(n_layer)
+    structure: Structure = make_n_layer_structure(
+        thicknesses=thicknesses, roughnesses=roughnesses, slds=slds
+    )
+    R = (
+        simulate_xrr_with_noise(structure, q)
+        if add_noise
+        else structure2R(structure, q)
+    )
+
+    return {
+        "structure": structure,
+        "thickness": thicknesses,
+        "roughness": roughnesses,
+        "sld": slds,
+        "R": R,
+    }
 
 
 def make_one_layer_structure(thickness: float, roughness: float, sld: float):
@@ -78,7 +100,7 @@ def make_structure_2l(
 
 
 def structure2R(structure: Structure, q: np.ndarray):
-    if q[0] < 0.03:
+    if q[0] < 0.01:
         raise ValueError("Initial value of q is too close to 0.")
     model = ReflectModel(structure)
     R = model(q)

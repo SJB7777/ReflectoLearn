@@ -4,4 +4,4 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["matplotlib", "numpy", "pandas", "scikit-learn", "scipy", "torch", "torchvision", "torchaudio", "tqdm", "refnx", "h5py"]
+dependencies = ["matplotlib", "numpy", "pandas", "scikit-learn", "scipy", "torch", "torchvision", "torchaudio", "tqdm", "refnx", "h5py", "ipykernel", "pydantic"]
