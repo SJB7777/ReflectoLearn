@@ -3,19 +3,20 @@ from pathlib import Path
 from loguru import logger
 
 from reflectolearn.data_processing.preprocess import preprocess_file
-from reflectolearn.config import load_config
+from reflectolearn.config import ConfigManager
 
 
 def main():
     logger.info("Starting preprocessing")
-    config = load_config(Path("config.yml"))
+    ConfigManager.initialize("config.yaml")
+    config = ConfigManager.load_config()
     logger.info(f"Config: {config}")
 
-    raw_file = Path(config["data"]["data_root"]) / "raw" / config["data"]["file_name"]
-    raw_name = Path(config["data"]["file_name"]).stem
-    data_version = config["data"]["version"]
+    raw_file = config.data.data_file
+    raw_name = raw_file.stem
+    project_version = config.project.version
     preprocessed_file = (
-        Path(config["data"]["data_root"]) / f"{raw_name}_{data_version}.h5"
+        config.data.data_root / f"{raw_name}_{project_version}.h5"
     )
 
     # Preprocess the raw data

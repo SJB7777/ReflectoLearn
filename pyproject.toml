@@ -1,7 +1,33 @@
 [project]
 name = "reflectolearn"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["matplotlib", "numpy", "pandas", "scikit-learn", "scipy", "torch", "torchvision", "torchaudio", "tqdm", "refnx", "h5py", "ipykernel", "pydantic"]
+dependencies = [
+    "matplotlib", 
+    "PyYAML",
+    "numpy", 
+    "pandas", 
+    "scikit-learn", 
+    "scipy", 
+    "torch", 
+    "torchvision", 
+    "torchaudio", 
+    "tqdm", 
+    "refnx", 
+    "h5py", 
+    "ipykernel", 
+    "pydantic",
+    "loguru"
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
+torchaudio = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true

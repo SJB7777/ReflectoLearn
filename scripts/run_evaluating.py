@@ -9,13 +9,14 @@ from reflectolearn import visualization as viz
 from reflectolearn.data_processing.preprocess import preprocess_features
 from reflectolearn.io import get_data
 from reflectolearn.models.model import get_model
-from reflectolearn.config import load_config
+from reflectolearn.config import ConfigManager
 
 
 def load_evaluation_assets():
     """모델, 스케일러, 평가 데이터, 학습 곡선을 불러옵니다."""
 
-    config = load_config()
+    ConfigManager.initialize('config.yaml')
+    config = ConfigManager.load_config()
 
     output_root: Path = config.project.output_dir
     model_file: Path = output_root / "model.pt"
