@@ -5,3 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["matplotlib", "numpy", "pandas", "scikit-learn", "scipy", "torch", "torchvision", "torchaudio", "tqdm", "refnx", "h5py", "ipykernel", "pydantic"]
+
+[tool.ruff.lint]
+extend-select = ["B", "I"] # Extend default rules with flake8-bugbear and isort-related rules
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
