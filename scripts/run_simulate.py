@@ -46,7 +46,7 @@ def main():
     logger.info("Configuration loaded successfully")
 
     N: int = 100
-    n_sample: int = 1_000_000
+    n_sample: int = 1_000
     n_layer: int = 3
     q = np.linspace(0.03, 0.3, N)
 
