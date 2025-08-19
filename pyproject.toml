@@ -55,10 +55,9 @@ docs = [
     "myst-parser>=0.18.0",
 ]
 
-[tool.uv.sources]
-torch = { index = "pytorch" }
-torchvision = { index = "pytorch" }
-torchaudio = { index = "pytorch" }
+[tool.ruff.lint]
+extend-select = ["B", "I"] # Extend default rules with flake8-bugbear and isort-related rules
+ignore = []
 
 [[tool.uv.index]]
 name = "pytorch"

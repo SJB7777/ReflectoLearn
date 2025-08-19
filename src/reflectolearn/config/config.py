@@ -1,11 +1,10 @@
 """
 Global configuration manager with placeholder substitution.
 """
-
-import re
 from pathlib import Path
 from typing import Any
 
+import re
 import yaml
 
 from reflectolearn.config.definitions import ExpConfig
@@ -88,7 +87,17 @@ class ConfigManager:
     @staticmethod
     def replace_placeholders(data: Any, context: dict, max_iterations=10):
         """
-        Recursively replace placeholders like ${key.subkey} in the data.
+        Recursively replace placeholders in the given data structure.
+
+        Placeholders are in the format `${key.subkey}`.
+
+        Args:
+            data (dict, list, str, or any): Data structure containing placeholders.
+            context (dict): Context dictionary for placeholder resolution.
+            max_iterations (int): Maximum number of iterations to prevent infinite loops.
+
+        Returns:
+            Data structure with placeholders replaced.
         """
 
         def _replace_in_string(s: str, ctx: dict) -> str:
@@ -127,7 +136,17 @@ class ConfigManager:
     @staticmethod
     def resolve_placeholder(placeholder: str, context: dict):
         """
-        Resolve ${a.b} style placeholder using context dict.
+        Resolve a placeholder to its corresponding value from the context.
+
+        Args:
+            placeholder (str): Placeholder string in the format `${key.subkey}`.
+            context (dict): Context dictionary containing the values.
+
+        Returns:
+            Value corresponding to the placeholder.
+
+        Raises:
+            ValueError: If the placeholder cannot be resolved.
         """
         keys = placeholder.split(".")
         value = context
