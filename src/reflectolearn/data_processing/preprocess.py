@@ -9,6 +9,19 @@ from ..math_utils import normalize, q_fourier_transform_multisample_gpu
 from ..types import DataVersion
 
 
+def remove_q4_decay(q, R, qmin=0.01):
+    """
+    XRR reflectivity R(q)를 q^4 decay 보정하여 intensity 감소 보정
+    :param q: momentum transfer [Å^-1]
+    :param R: reflectivity
+    :param qmin: 작은 q에서 발산 방지를 위한 최소값
+    :return: intensity_corrected
+    """
+    q_safe = np.clip(q, qmin, None)   # q=0 발산 막음
+    intensity_corrected = (q_safe**4) * R
+    return intensity_corrected
+
+
 def log_q4(R: np.ndarray, q: np.ndarray):
     return np.log10(R * np.pow(q, 4))
 
