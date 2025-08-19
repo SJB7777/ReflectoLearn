@@ -2,8 +2,9 @@
 This module provides functionality to load and save configuration files,
 with support for placeholder substitution in the configuration values.
 """
-from pathlib import Path
+
 import re
+from pathlib import Path
 from typing import Self
 
 import yaml
@@ -14,32 +15,34 @@ from reflectolearn.config.definitions import ExpConfig
 class ConfigManager:
     _instance = None
     _initialized = False
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         if not ConfigManager._initialized:
             self._config_file = None
             self._cached_config = None
             ConfigManager._initialized = True
-    
+
+    @classmethod
     def initialize(self, config_file: Path | str) -> Self:
         """
         Initialize the config manager with a configuration file path.
-        
+
         Args:
             config_file (str): Path to the configuration file.
-            
+
         Returns:
             ConfigManager: Self for method chaining.
         """
         self._config_file = config_file
         self._cached_config = None  # Clear cache when changing file
         return self
-    
+
+    @classmethod
     def load_config(self, reload: bool = False) -> ExpConfig:
         """
         Load the configuration file with an option to reload the cache.
@@ -49,18 +52,18 @@ class ConfigManager:
 
         Returns:
             ExpConfig: Configuration object with placeholders resolved.
-            
+
         Raises:
             RuntimeError: If config file path is not set.
         """
         if self._config_file is None:
             raise RuntimeError("Config file not initialized. Call initialize() first.")
-        
+
         if reload or self._cached_config is None:
             self._cached_config = self._load_config()
-        
+
         return self._cached_config
-    
+
     def _load_config(self) -> ExpConfig:
         """
         Load the configuration file, replace placeholders, and return the configuration object.
@@ -68,42 +71,42 @@ class ConfigManager:
         Returns:
             ExpConfig: Configuration object with placeholders resolved.
         """
-        with open(self._config_file, "r", encoding="utf-8") as f:
+        with open(self._config_file, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
 
         context = config_dict.copy()
         replaced_data = self.replace_placeholders(config_dict, context)
 
         return ExpConfig(**replaced_data)
-    
+
     def save_config(self, config_dict: dict) -> None:
         """
         Save the given configuration dictionary to the configuration file.
 
         Args:
             config_dict (dict): Configuration dictionary to be saved.
-            
+
         Raises:
             RuntimeError: If config file path is not set.
         """
         if self._config_file is None:
             raise RuntimeError("Config file not initialized. Call initialize() first.")
-        
+
         with open(self._config_file, "w", encoding="utf-8") as f:
             yaml.safe_dump(config_dict, f, default_flow_style=False, sort_keys=False)
-        
+
         # Clear cache after saving
         self._cached_config = None
-    
+
     def reload(self) -> ExpConfig:
         """
         Convenience method to reload the configuration.
-        
+
         Returns:
             ExpConfig: Reloaded configuration object.
         """
         return self.load_config(reload=True)
-    
+
     @staticmethod
     def replace_placeholders(data, context, max_iterations=10):
         """
@@ -137,31 +140,24 @@ class ConfigManager:
             case dict() as d:
                 # Create a copy of the data to avoid modifying the input
                 result = {
-                    key: ConfigManager.replace_placeholders(value, context, max_iterations)
-                    for key, value in d.items()
+                    key: ConfigManager.replace_placeholders(value, context, max_iterations) for key, value in d.items()
                 }
                 # Update context with resolved values for subsequent resolutions
-                context.update(
-                    {
-                        k: v
-                        for k, v in result.items()
-                        if isinstance(v, (dict, str, int, float, bool))
-                    }
-                )
+                context.update({k: v for k, v in result.items() if isinstance(v, (dict, str, int, float, bool))})
                 return result
-            
+
             case list() as l:
                 return [ConfigManager.replace_placeholders(item, context, max_iterations) for item in l]
-            
+
             case str() as s:
                 match = re.fullmatch(r"\$\{([^}]+)\}", s)
                 if match:
                     return ConfigManager.resolve_placeholder(match.group(1), context)
                 return _replace_in_string(s, context)
-            
+
             case None | int() | float() | bool():
                 return data
-            
+
             case _:
                 return data
 
@@ -193,10 +189,10 @@ class ConfigManager:
 def initialize_config(config_file: Path | str) -> ConfigManager:
     """
     Initialize the global config manager.
-    
+
     Args:
         config_file (Path | str): Path to the configuration file.
-        
+
     Returns:
         ConfigManager: Initialized config manager.
     """
@@ -206,10 +202,10 @@ def initialize_config(config_file: Path | str) -> ConfigManager:
 def load_config(reload: bool = False) -> ExpConfig:
     """
     Load the configuration using the global config manager.
-    
+
     Args:
         reload (bool): If True, reload the configuration.
-        
+
     Returns:
         ExpConfig: Configuration object.
     """
@@ -219,7 +215,7 @@ def load_config(reload: bool = False) -> ExpConfig:
 def save_config(config_dict: dict) -> None:
     """
     Save configuration using the global config manager.
-    
+
     Args:
         config_dict (dict): Configuration dictionary to save.
     """

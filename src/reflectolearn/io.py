@@ -3,14 +3,12 @@ from pathlib import Path
 
 import h5py
 import numpy as np
-from tqdm import tqdm
 import torch
+from tqdm import tqdm
 
 from .data_processing.simulate import (
-    make_one_layer_structure,
     make_structure_2l,
     structure2R,
-    simulate_xrr_with_noise,
 )
 
 
@@ -34,9 +32,7 @@ def main_hdf5(save_file: Path, total: int):
             thickness2 = random.uniform(20, 1000)
             roughness2 = max(random.uniform(0, 100), thickness * 0.4)
             sld2 = random.uniform(1.0, 14.0)
-            structure = make_structure_2l(
-                thickness, roughness, sld, thickness2, roughness2, sld2
-            )
+            structure = make_structure_2l(thickness, roughness, sld, thickness2, roughness2, sld2)
             R = structure2R(structure, q)
 
             sample_name = f"sample_{i:06d}"
@@ -121,9 +117,7 @@ def get_data(path: Path):
             n_layer += 1
 
         if n_layer == 0:
-            raise ValueError(
-                "Could not determine n_layer from HDF5 attributes. 'thickness_0' not found."
-            )
+            raise ValueError("Could not determine n_layer from HDF5 attributes. 'thickness_0' not found.")
 
         # Iterate through each sample group
         for sample_name in tqdm(f["samples"], desc="Loading samples"):

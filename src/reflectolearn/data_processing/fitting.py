@@ -1,7 +1,6 @@
-import numpy as np
-from scipy import interpolate
 import matplotlib.pyplot as plt
-from scipy import fftpack
+import numpy as np
+from scipy import fftpack, interpolate
 
 
 def XRR_from_q(q, intensity, crit_q=None, num_points=1000):
@@ -12,7 +11,7 @@ def XRR_from_q(q, intensity, crit_q=None, num_points=1000):
         intensity = intensity[mask]
 
     # 2. q⁴ background correction
-    intensity_corrected = (q ** 4) * intensity
+    intensity_corrected = (q**4) * intensity
 
     # 3. Generate evenly spaced q-grid
     q_uniform = np.linspace(q.min(), q.max(), num_points)
@@ -30,16 +29,18 @@ def estimate_critical_q(q, R, window=5):
     이동 평균 필터로 스무딩 후 기울기 변화를 이용.
     """
     logR = np.log10(R + 1e-12)
-    smooth_logR = np.convolve(logR, np.ones(window) / window, mode='same')
+    smooth_logR = np.convolve(logR, np.ones(window) / window, mode="same")
     grad = np.gradient(smooth_logR, q)
     critical_idx = np.argmin(grad)  # 가장 급격한 감소 지점
     return q[critical_idx]
+
 
 def subtract_baseline(y):
     """
     데이터의 평균값을 빼서 baseline 제거.
     """
     return y - np.mean(y)
+
 
 def fft_thickness_analysis(q, R, crit_q=None):
     """
@@ -55,6 +56,7 @@ def fft_thickness_analysis(q, R, crit_q=None):
 
     thickness = 2 * np.pi / freq  # nm 단위로 변환 시 scaling 필요
     return q_sel, y, thickness, np.abs(y_fft)
+
 
 def plot_fft_results(q_sel, y, thickness, fft_amp):
     """
@@ -79,11 +81,10 @@ def plot_fft_results(q_sel, y, thickness, fft_amp):
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from reflectolearn.data_processing.simulate import make_multifilm
 
-
     q = np.linspace(0.02, 0.3, 500)
-    R = make_multifilm(3, q, add_noise=True)['R']
+    R = make_multifilm(3, q, add_noise=True)["R"]
     q_sel, y, thickness, fft_amp = fft_thickness_analysis(q, R, crit_q=None)
     plot_fft_results(q_sel, y, thickness, fft_amp)

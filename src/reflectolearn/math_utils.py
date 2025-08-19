@@ -10,9 +10,7 @@ def normalize(arr: np.ndarray | torch.Tensor) -> np.ndarray:
     return (arr - arr.mean()) / arr.std()
 
 
-def q_fourier_transform(
-    qs: np.ndarray, reflections: np.ndarray, zs: np.ndarray
-) -> np.ndarray:
+def q_fourier_transform(qs: np.ndarray, reflections: np.ndarray, zs: np.ndarray) -> np.ndarray:
     Z = zs[:, np.newaxis]
     Q = qs[np.newaxis, :]
 
@@ -23,9 +21,7 @@ def q_fourier_transform(
     return np.trapezoid(integrand * phase, qs, axis=1)
 
 
-def q_fourier_transform_multisample_gpu(
-    R_all, q, z, batch_size=1024, show_progress=True
-):
+def q_fourier_transform_multisample_gpu(R_all, q, z, batch_size=1024, show_progress=True):
     N_samples, N_q = R_all.shape
     N_z = z.shape[0]
 

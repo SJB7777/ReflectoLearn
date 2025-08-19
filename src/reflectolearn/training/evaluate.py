@@ -50,18 +50,12 @@ def main():
 
     # Load data
     x_all, y_all_scaled, scaler = load_and_preprocess_data(data_path)
-    _, x_val, _, y_val_scaled = train_test_split(
-        x_all, y_all_scaled, test_size=0.2, random_state=42
-    )
-    val_loader = DataLoader(
-        TensorDataset(x_val, y_val_scaled), batch_size=256, shuffle=False
-    )
+    _, x_val, _, y_val_scaled = train_test_split(x_all, y_all_scaled, test_size=0.2, random_state=42)
+    val_loader = DataLoader(TensorDataset(x_val, y_val_scaled), batch_size=256, shuffle=False)
 
     # Load model
     model = XRRHybridRegressor(input_length=x_val.shape[1])
-    model.load_state_dict(
-        torch.load(model_path, map_location=device, weights_only=True)
-    )
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.to(device)
 
     # Evaluate

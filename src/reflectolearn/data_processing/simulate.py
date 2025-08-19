@@ -25,16 +25,9 @@ def make_parameters(n: int):
 
 
 def make_multifilm(n_layer: int, q: np.ndarray, add_noise=True):
-
     thicknesses, roughnesses, slds = make_parameters(n_layer)
-    structure: Structure = make_n_layer_structure(
-        thicknesses=thicknesses, roughnesses=roughnesses, slds=slds
-    )
-    R = (
-        simulate_xrr_with_noise(structure, q)
-        if add_noise
-        else structure2R(structure, q)
-    )
+    structure: Structure = make_n_layer_structure(thicknesses=thicknesses, roughnesses=roughnesses, slds=slds)
+    R = simulate_xrr_with_noise(structure, q) if add_noise else structure2R(structure, q)
 
     return {
         "structure": structure,
@@ -66,7 +59,7 @@ def make_n_layer_structure(
 
     # Stack을 이용한 반복 구조 생성
     multilayer = Stack(name="Multilayer", repeats=len(thicknesses))
-    for t, r, s in zip(thicknesses, roughnesses, slds):
+    for t, r, s in zip(thicknesses, roughnesses, slds, strict=False):
         film = SLD(s, name=f"Film SLD={s}")
         multilayer.append(film(t, r))
 
@@ -90,11 +83,7 @@ def make_structure_2l(
     substrate = SLD(2.0, name="Substrate")
 
     structure = (
-        air(0, 0)
-        | oxide(20, 2)
-        | film2(thickness2, roughness2)
-        | film1(thickness1, roughness1)
-        | substrate(0, 3)
+        air(0, 0) | oxide(20, 2) | film2(thickness2, roughness2) | film1(thickness1, roughness1) | substrate(0, 3)
     )
     return structure
 

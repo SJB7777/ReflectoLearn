@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from ..types import ModelType, DataVersion
+from ..types import DataVersion, ModelType
 
 
 class ProjectConfig(BaseModel):
@@ -26,9 +26,7 @@ class DataConfig(BaseModel):
     Configuration for data paths and related parameters.
     """
 
-    data_root: Path = Field(
-        ..., description="Directory containing the input data files"
-    )
+    data_root: Path = Field(..., description="Directory containing the input data files")
     data_file: Path = Field(..., description="Path to the input data file")
 
 
@@ -52,9 +50,7 @@ class ModelConfig(BaseModel):
     Configuration for the model architecture and parameters.
     """
 
-    type: ModelType = Field(
-        ..., description="Type of the model (e.g., 'hybrid', 'cnn')"
-    )
+    type: ModelType = Field(..., description="Type of the model (e.g., 'hybrid', 'cnn')")
 
 
 class ExpConfig(BaseModel):

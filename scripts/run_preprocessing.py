@@ -1,9 +1,7 @@
-from pathlib import Path
-
 from loguru import logger
 
-from reflectolearn.data_processing.preprocess import preprocess_file
 from reflectolearn.config import ConfigManager
+from reflectolearn.data_processing.preprocess import preprocess_file
 
 
 def main():
@@ -15,9 +13,7 @@ def main():
     raw_file = config.data.data_file
     raw_name = raw_file.stem
     project_version = config.project.version
-    preprocessed_file = (
-        config.data.data_root / f"{raw_name}_{project_version}.h5"
-    )
+    preprocessed_file = config.data.data_root / f"{raw_name}_{project_version}.h5"
 
     # Preprocess the raw data
     preprocess_file(raw_file, preprocessed_file)

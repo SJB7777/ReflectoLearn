@@ -6,16 +6,16 @@ import torch
 from loguru import logger
 
 from reflectolearn import visualization as viz
+from reflectolearn.config import ConfigManager
 from reflectolearn.data_processing.preprocess import preprocess_features
 from reflectolearn.io import get_data
 from reflectolearn.models.model import get_model
-from reflectolearn.config import ConfigManager
 
 
 def load_evaluation_assets():
     """모델, 스케일러, 평가 데이터, 학습 곡선을 불러옵니다."""
 
-    ConfigManager.initialize('config.yaml')
+    ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
 
     output_root: Path = config.project.output_dir
@@ -61,21 +61,15 @@ def load_evaluation_assets():
 
 
 def evaluate_and_visualize():
-    model, scaler, x_val, y_val_orig, train_losses, val_losses = (
-        load_evaluation_assets()
-    )
+    model, scaler, x_val, y_val_orig, train_losses, val_losses = load_evaluation_assets()
 
-    # ✅ 추정된 출력 파라미터 수
+    # 추정된 출력 파라미터 수
     n_outputs = y_val_orig.shape[1]
     if n_outputs % 3 != 0:
         raise ValueError(f"출력 파라미터 수({n_outputs})가 3의 배수가 아닙니다.")
 
     n_layer = n_outputs // 3
-    param_names = [
-        f"{param}_{i}"
-        for i in range(n_layer)
-        for param in ("roughness", "sld", "thickness")
-    ]
+    param_names = [f"{param}_{i}" for i in range(n_layer) for param in ("roughness", "sld", "thickness")]
 
     with torch.no_grad():
         y_pred_normalized = model(x_val).numpy()

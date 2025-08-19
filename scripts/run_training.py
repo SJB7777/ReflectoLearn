@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import joblib
 import numpy as np
 import torch
@@ -8,11 +6,11 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
+from reflectolearn.config import ConfigManager
 from reflectolearn.data_processing.preprocess import load_and_preprocess_data
 from reflectolearn.io import save_model
 from reflectolearn.models.model import get_model
 from reflectolearn.training.train import train_model
-from reflectolearn.config import load_config
 
 
 def set_seed(seed: int):
@@ -32,9 +30,7 @@ def get_device_and_workers() -> tuple[torch.device, int]:
 
 
 def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: int):
-    x_train, x_val, y_train, y_val = train_test_split(
-        x_all, y_all, test_size=0.2, random_state=seed
-    )
+    x_train, x_val, y_train, y_val = train_test_split(x_all, y_all, test_size=0.2, random_state=seed)
 
     train_loader = DataLoader(
         TensorDataset(x_train, y_train),
@@ -55,7 +51,8 @@ def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: i
 
 def main():
     logger.info("Starting training script")
-    config = load_config()
+    ConfigManager.initialize("config.yaml")
+    config = ConfigManager.load_config()
     logger.info(f"Config: {config}")
     seed = config.training.seed
     set_seed(seed)
@@ -65,9 +62,7 @@ def main():
 
     data_file = config.data.data_file
 
-    x_all, y_all_scaled, scaler = load_and_preprocess_data(
-        data_file, config.project.version
-    )
+    x_all, y_all_scaled, scaler = load_and_preprocess_data(data_file, config.project.version)
 
     train_loader, val_loader = prepare_dataloaders(
         x_all,

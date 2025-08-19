@@ -19,9 +19,7 @@ def plot_losses(train_losses: list[float], val_losses: list[float]):
     plt.show()
 
 
-def plot_losses_with_annotations(
-    train_losses: list[float], val_losses: list[float], save_path=None
-):
+def plot_losses_with_annotations(train_losses: list[float], val_losses: list[float], save_path=None):
     """학습 손실 곡선 + 특정 에포크 주석"""
     epochs = np.arange(1, len(train_losses) + 1)
     plt.figure(figsize=(10, 6))
@@ -85,9 +83,7 @@ def plot_r2_scores(y_true: np.ndarray, y_pred: np.ndarray, param_names: list[str
     plt.show()
 
 
-def plot_best_worst_fits(
-    x_val: torch.Tensor, y_true: np.ndarray, y_pred: np.ndarray, top_n: int = 3
-):
+def plot_best_worst_fits(x_val: torch.Tensor, y_true: np.ndarray, y_pred: np.ndarray, top_n: int = 3):
     """예측 성능 기준 상하위 N개의 Rs 곡선 플롯"""
     errors = ((y_pred - y_true) ** 2).sum(axis=1)
     best_indices = errors.argsort()[:top_n]
@@ -131,9 +127,7 @@ def plot_residuals(y_true: np.ndarray, y_pred: np.ndarray, param_names: list[str
     plt.show()
 
 
-def plot_error_histograms(
-    y_true: np.ndarray, y_pred: np.ndarray, param_names: list[str]
-):
+def plot_error_histograms(y_true: np.ndarray, y_pred: np.ndarray, param_names: list[str]):
     """예측 오차 분포 히스토그램"""
     errors = y_pred - y_true
     plt.figure(figsize=(5 * len(param_names), 4))

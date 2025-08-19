@@ -61,9 +61,7 @@ def train_model(
         val_losses.append(avg_val_loss)
 
         if (epoch + 1) % 10 == 0 or epoch == 0:
-            logger.info(
-                f"[Epoch {epoch + 1:03d}] Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}"
-            )
+            logger.info(f"[Epoch {epoch + 1:03d}] Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
 
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
@@ -71,9 +69,7 @@ def train_model(
         else:
             stagnation_counter += 1
             if stagnation_counter >= patience:
-                logger.info(
-                    f"Early stopping at epoch {epoch + 1}: no improvement for {patience} epochs."
-                )
+                logger.info(f"Early stopping at epoch {epoch + 1}: no improvement for {patience} epochs.")
                 break
 
     return train_losses, val_losses

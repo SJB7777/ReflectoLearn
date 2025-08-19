@@ -10,9 +10,7 @@ class XRRRegressor(nn.Module):
         super(XRRRegressor, self).__init__()
 
         # 1D CNN feature extractor
-        self.conv1 = nn.Conv1d(
-            in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2
-        )
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2)
         self.bn1 = nn.BatchNorm1d(16)
 
         self.conv2 = nn.Conv1d(16, 32, kernel_size=5, stride=1, padding=2)
@@ -86,13 +84,9 @@ class XRRHybridRegressor(nn.Module):
         return out
 
 
-def get_model(
-    model_type: ModelType, input_length: int, output_length: int
-) -> nn.Module:
+def get_model(model_type: ModelType, input_length: int, output_length: int) -> nn.Module:
     if not isinstance(model_type, ModelType):
-        raise TypeError(
-            f"model_typle should be an instance of {ModelType.__name__} not {type(model_type)}"
-        )
+        raise TypeError(f"model_typle should be an instance of {ModelType.__name__} not {type(model_type)}")
     match model_type:
         case ModelType.HYBRID:
             if input_length is None:

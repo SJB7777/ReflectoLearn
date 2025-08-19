@@ -4,8 +4,7 @@ import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from ..io import get_data
-from ..io import xrd2hdf5
+from ..io import get_data, xrd2hdf5
 from ..math_utils import normalize, q_fourier_transform_multisample_gpu
 from ..types import DataVersion
 
@@ -26,9 +25,7 @@ def preprocess_features(data_version: DataVersion, raw_data: dict) -> torch.Tens
             features = torch.log10(features + 1e-8)
         case DataVersion.FOURIER:
             z_axis = torch.linspace(0, 500, 2048, dtype=torch.float32)
-            ft_result = q_fourier_transform_multisample_gpu(
-                reflectivity, raw_data["q"], z_axis
-            )
+            ft_result = q_fourier_transform_multisample_gpu(reflectivity, raw_data["q"], z_axis)
             features = torch.abs(ft_result) ** 2
             features = torch.log10(features + 1e-8)
         case _:
