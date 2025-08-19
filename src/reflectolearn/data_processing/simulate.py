@@ -14,7 +14,7 @@ def make_parameters(n: int):
     for _ in range(n):
         max_thick = 100
         thickness = random.uniform(20, max_thick)
-        roughness = random.uniform(0, thickness * 0.1)
+        roughness = random.uniform(0, thickness * 0.06)
         sld = random.uniform(1.0, 3.0)
 
         thicknesses.append(thickness)
@@ -110,8 +110,8 @@ def simulate_xrr_with_noise(structure: Structure, q: np.ndarray):
     N = len(q)
     R = structure2R(structure, q)
     R_poisson = apply_poisson_noise(R, s=10 ** random.uniform(6, 8))
-    uniform_noise = np.random.uniform(0.7, 1.3, N)
+    uniform_noise = np.random.uniform(0, 0.1, N)
     background_noise = get_background_noise(N, -7, -4)
-    curve_scaling = np.random.uniform(0.9, 1.1)
+    curve_scaling = np.random.uniform(0.98, 1.02)
     R_noise = R_poisson * uniform_noise * curve_scaling + background_noise
     return R_noise

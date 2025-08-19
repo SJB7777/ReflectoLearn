@@ -1,131 +1,192 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy as scp
-import scipy.optimize as optimize
 import scipy.signal.windows as fft_windows
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 
-hc = 12.398  # Planck constant * speed of light [keV·Å]
+def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
+    """
+    Convert 2theta angles (deg) to qz (1/Å) given X-ray energy.
+    
+    Parameters
+    ----------
+    tth_deg : array_like
+        2theta angles in degrees.
+    energy_keV : float
+        X-ray energy in keV.
+    
+    Returns
+    -------
+    qz : np.ndarray
+        Momentum transfer qz values (1/Å).
+    """
+    # keV -> Å
+    wavelength = 12.39842 / energy_keV  # [Å]
+    
+    # 2θ (deg) -> θ (rad)
+    theta_rad = np.radians(tth_deg / 2.0)
+    
+    # qz [1/Å]
+    qz = (4 * np.pi / wavelength) * np.sin(theta_rad)
+    return qz
+
+def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
+    """
+    Estimate critical angle qc from reflectivity curve.
+    
+    Parameters
+    ----------
+    q : np.ndarray
+        Momentum transfer values.
+    R : np.ndarray
+        Reflectivity values.
+    threshold : float, optional
+        Reflectivity cutoff (default = 0.99).
+    
+    Returns
+    -------
+    qc : float
+        Estimated critical q value.
+    """
+    # normalize
+    R = R / np.max(R)
+
+    # 방법 1: R이 threshold 아래로 내려가기 시작하는 첫 q
+    mask = np.where(R < threshold)[0]
+    if len(mask) > 0:
+        qc_est = q[mask[0]]
+    else:
+        qc_est = q[np.argmin(R)]  # 전반사 없으면 최소값 반환
+    
+    # 방법 2: 기울기 최대점도 같이 구해볼 수 있음
+    dR = np.gradient(R, q)
+    slope_q = q[np.argmin(dR)]
+    
+    # 둘 다 비슷하다면 평균
+    return (qc_est + slope_q) / 2
 
 
-# ---------------- Core transformation functions ---------------- #
-def tth2qz_by_energy(tth_deg: float | np.ndarray, energy: float) -> np.ndarray:
-    """Convert 2θ (deg) to qz (1/nm) using beam energy in keV."""
-    th_rad = np.deg2rad(tth_deg / 2)
-    return 4 * np.pi * np.sin(th_rad) * energy / hc
+# ---------------------------
+# XRR 전처리 + FFT
+# ---------------------------
+def preprocess_xrr(data, crit_ang):
+    """
+    Preprocess XRR dataset for FFT.
+    :param data: numpy array with [2θ angle, intensity]
+    :param crit_ang: critical angle (deg)
+    :return: (x, y) -> rescaled evenly spaced dataset
+    """
+    s_cor = 2 * np.sqrt(
+        (np.cos(np.pi * crit_ang / 2 / 180)) ** 2
+        - (np.cos(np.pi * data[:, 0] / 2 / 180)) ** 2
+    ) / 0.152
 
+    mask = np.logical_not(np.isnan(s_cor))
+    s_cor = s_cor[mask]
+    intensity = s_cor**4 * data[mask, 1]
 
-def XRR_q(data_q: np.ndarray, q_crit: float) -> tuple[np.ndarray, np.ndarray]:
-    """Preprocess XRR reflectivity data for FFT analysis (q, R)."""
-    q_nm, R = data_q[:, 0], data_q[:, 1]
-    s_cor = np.sqrt(q_crit**2 - q_nm**2)
-    mask = np.isfinite(s_cor)
-    s_cor, intensity = s_cor[mask], (s_cor[mask] ** 4) * R[mask]
-
-    s_cor, unique_idx = np.unique(s_cor, return_index=True)
-    intensity = intensity[unique_idx]
-
-    if len(s_cor) < 4:
-        raise ValueError(f"Not enough points ({len(s_cor)}) for cubic interpolation.")
-
-    interp_kind = "cubic" if len(s_cor) >= 4 else "linear"
     x = np.linspace(s_cor.min(), s_cor.max(), 1000)
-    f = scp.interpolate.interp1d(s_cor, intensity, kind=interp_kind)
+    f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
     return x, f(x)
 
 
-def FFT(x: np.ndarray, y: np.ndarray, d: float | None = None, window: int = 2, n: int | None = None):
-    """Compute (real) FFT with multiple window options."""
+
+def xrr_fft(x, y, d=None, window=2, n=None):
+    """
+    FFT 변환 (XRR 분석 전용)
+    :param x: q 값 (전처리된 등간격 배열)
+    :param y: intensity 값
+    """
     if d is None:
         d = x[1] - x[0]
-    N = len(y)
 
-    # Select window function
+    N = len(y)
     if window == 0:
-        win = np.ones(N)
+        w = np.ones(N)
     elif window == 1:
-        win = fft_windows.hann(N)
+        w = fft_windows.hann(N)
     elif window == 2:
-        win = fft_windows.hamming(N)
+        w = fft_windows.hamming(N)
     else:
-        win = fft_windows.flattop(N)
+        w = fft_windows.flattop(N)
 
     if n is None:
         n = N
 
-    # FFT with normalization
-    yf = 2 / N * np.abs(scp.fftpack.fft(win * y / np.mean(win), n=n))
+    yf = 2 / N * np.abs(scp.fftpack.fft(w * y / np.mean(w), n=n))
     xf = scp.fftpack.fftfreq(n, d=d)
     return xf[: n // 2], yf[: n // 2]
 
-
-# ---------------- Fit model functions ---------------- #
-def funcNoise(x, amp, ex):
+# ---------------------------
+# Fitting 모델 정의
+# ---------------------------
+def func_noise(x, amp, ex):
+    """1/f noise background"""
     return amp / np.power(x, ex)
 
-
-def funcGauss(p, a, pmax, w):
+def func_gauss(p, a, pmax, w):
+    """Single Gaussian"""
     return a * np.exp(-np.log(2) * ((pmax - p) / (w / 2)) ** 2)
 
+def func_gauss2(p, a1, a2, pmax1, pmax2, w1, w2):
+    """Sum of two Gaussians"""
+    return func_gauss(p, a1, pmax1, w1) + func_gauss(p, a2, pmax2, w2)
 
-def funcGauss2(p, a1, a2, pmax1, pmax2, w1, w2):
-    return funcGauss(p, a1, pmax1, w1) + funcGauss(p, a2, pmax2, w2)
-
-
-def funcGauss3(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, amp, ex, z0):
+def func_gauss3_with_noise(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, amp, ex, z0):
+    """Multi-Gaussian + noise"""
     pmax1 = pmax3 - pmax2
-    return funcGauss2(p, a1, a2, pmax1, pmax2, w1, w2) \
-           + funcGauss(p, a3, pmax3, w3) \
-           + funcNoise(p, amp, ex) + z0
-
-
-# ---------------- Higher-level analysis ---------------- #
-def estimate_qc(q: np.ndarray, R: np.ndarray, smooth_window=5) -> float:
-    """Estimate critical momentum transfer qc from reflectivity curve."""
-    logR = np.log(R)
-    logR_smooth = np.convolve(logR, np.ones(smooth_window) / smooth_window, mode="same")
-    dlogR = np.gradient(logR_smooth, q)
-    return q[np.argmax(np.abs(dlogR))]
-
-
-def analyze_xrr_fft(data: np.ndarray, crit_q: float):
-    """Perform FFT-based analysis on reflectivity data."""
-    q_uniform, intensity_uniform = XRR_q(data, crit_q)
-    fft_x, fft_y = FFT(q_uniform, intensity_uniform, window=2, n=10000)
-    fft_y_norm = fft_y / fft_y[0]
-
-    mask_bg = np.logical_or(
-        np.logical_and(fft_x > 1, fft_x < 5),
-        np.logical_and(fft_x > 26, fft_x < 80)
+    return (
+        func_gauss2(p, a1, a2, pmax1, pmax2, w1, w2)
+        + func_gauss(p, a3, pmax3, w3)
+        + func_noise(p, amp, ex)
+        + z0
     )
-    mask_full = np.logical_and(fft_x > 1.1, fft_x < 80)
-
-    popt_noise, _ = optimize.curve_fit(funcNoise, fft_x[mask_bg], fft_y_norm[mask_bg])
-    p0 = [0.2, 0.3, 0.2, 7, 0.3, 0.2, 13, 0.3, 1, 2, 2e-3]
-    bounds = (0, np.inf)
-    popt_gauss3, _ = optimize.curve_fit(funcGauss3, fft_x[mask_full], fft_y_norm[mask_full], p0=p0, bounds=bounds)
-
-    return fft_x, fft_y_norm, popt_noise, popt_gauss3
 
 
-def plot_xrr_fft(fft_x, fft_y_norm, popt_gauss3):
-    """Plot FFT spectrum with Gaussian component fits."""
-    fig, ax = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(8, 6))
-    ax[0].plot(fft_x, fft_y_norm, "o-", ms=1, lw=0.7, color="dimgrey", label="FFT data")
-    ax[1].plot(fft_x, fft_y_norm, "o-", ms=1, lw=0.7, color="dimgrey")
+# ---------------------------
+# Fitting 실행 유틸
+# ---------------------------
+def fit_multi_gaussian(x, y):
+    """
+    Fit multi-Gaussian + noise model to FFT data
+    :param x: frequency axis (nm)
+    :param y: normalized fft amplitude
+    :return: popt (best parameters), pcov (covariance)
+    """
+    popt, pcov = curve_fit(
+        func_gauss3,
+        x,
+        y,
+        p0=[0.2, 0.3, 0.2, 7, 0.3, 0.2, 13, 0.3, 1, 2, 2e-3],
+        bounds=(0, np.inf),
+    )
+    return popt, pcov
 
-    ax[0].plot(fft_x, funcGauss3(fft_x, *popt_gauss3), "-", color="goldenrod", label="Multi-Gaussian fit")
 
-    ax[1].plot(fft_x, funcGauss(fft_x, *popt_gauss3[2:5]), "--", color="darkblue", label="Gaussian 1")
-    ax[1].plot(fft_x, funcGauss(fft_x, popt_gauss3[0], popt_gauss3[6]-popt_gauss3[3], popt_gauss3[1]),
-               "--", color="purple", label="Gaussian 2")
-    ax[1].plot(fft_x, funcGauss(fft_x, *popt_gauss3[5:8]), "--", color="teal", label="Gaussian 3")
-    ax[1].plot(fft_x, funcNoise(fft_x, *popt_gauss3[8:10]), "--", color="chocolate", label="1/f noise")
+# ---------------------------
+# 시각화
+# ---------------------------
+def plot_fft_fit(FFTpadx, FFTpady_n, xmask, ymask, poptGauss3):
+    fig, ax = plt.subplots(2, 1, sharex=True, sharey=True)
 
-    ax[0].set_ylabel("Normalized FFT amplitude")
-    ax[1].set_xlabel("Thickness (nm)")
-    ax[0].set_xlim(0, 80)
-    ax[0].set_ylim(0, 1.1)
+    # Raw data
+    ax[0].plot(FFTpadx, FFTpady_n, "o-", ms=1, lw=0.7, c="dimgrey", label="data")
+    ax[1].plot(FFTpadx, FFTpady_n, "o-", ms=1, lw=0.7, c="dimgrey", label="data")
+
+    # Combined fit
+    ax[0].plot(xmask, func_gauss3(xmask, *poptGauss3), "-", c="goldenrod", label="multi-Gaussian fit")
+
+    # Components
+    ax[1].plot(xmask, func_gauss(xmask, *poptGauss3[2:5]), "--", c="darkblue", label="Gaussian 1")
+    ax[1].plot(xmask, func_gauss(xmask, poptGauss3[0], poptGauss3[6]-poptGauss3[3], poptGauss3[1]), "--", c="purple", label="Gaussian 2")
+    ax[1].plot(xmask, func_gauss(xmask, *poptGauss3[5:8]), "--", c="teal", label="Gaussian 3")
+    ax[1].plot(xmask, func_noise(xmask, *poptGauss3[8:10]), "--", c="chocolate", label="1/f^α")
+
+    ax[0].set_ylabel("normalized FFT amplitude")
+    ax[1].set_xlabel("thickness (nm)")
+    ax[0].set_xlim(0, 35)
+    ax[0].set_ylim(0, 0.45)
+
     ax[0].legend()
     ax[1].legend()
-    plt.tight_layout()
     plt.show()
