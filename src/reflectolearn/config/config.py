@@ -1,10 +1,10 @@
 """
 Global configuration manager with placeholder substitution.
 """
+import re
 from pathlib import Path
 from typing import Any
 
-import re
 import yaml
 
 from reflectolearn.config.definitions import ExpConfig

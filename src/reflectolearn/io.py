@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from .data_processing.simulate import (
+from .processing.simulate import (
     make_structure_2l,
     structure2R,
 )

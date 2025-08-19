@@ -7,9 +7,9 @@ from loguru import logger
 
 from reflectolearn import visualization as viz
 from reflectolearn.config import ConfigManager
-from reflectolearn.data_processing.preprocess import preprocess_features
 from reflectolearn.io import get_data
 from reflectolearn.models.model import get_model
+from reflectolearn.processing.preprocess import preprocess_features
 
 
 def load_evaluation_assets():

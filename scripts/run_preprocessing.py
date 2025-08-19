@@ -1,7 +1,7 @@
 from loguru import logger
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.data_processing.preprocess import preprocess_file
+from reflectolearn.processing.preprocess import preprocess_file
 
 
 def main():

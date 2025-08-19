@@ -29,13 +29,13 @@ def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
     qz = (4 * np.pi / wavelength) * np.sin(theta_rad)
     return qz
 
-def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
+def estimate_thc(th: np.ndarray, R: np.ndarray, threshold: float = 0.99):
     """
     Estimate critical angle qc from reflectivity curve.
     Parameters
     ----------
-    q : np.ndarray
-        Momentum transfer values.
+    th : np.ndarray
+        Theta values.
     R : np.ndarray
         Reflectivity values.
     threshold : float, optional
@@ -51,16 +51,16 @@ def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
     # 방법 1: R이 threshold 아래로 내려가기 시작하는 첫 q
     mask = np.where(R < threshold)[0]
     if len(mask) > 0:
-        qc_est = q[mask[0]]
+        thc_est = th[mask[0]]
     else:
-        qc_est = q[np.argmin(R)]  # 전반사 없으면 최소값 반환
+        thc_est = th[np.argmin(R)]  # 전반사 없으면 최소값 반환
 
     # 방법 2: 기울기 최대점도 같이 구해볼 수 있음
-    dR = np.gradient(R, q)
-    slope_q = q[np.argmin(dR)]
+    dR = np.gradient(R, th)
+    slope_q = th[np.argmin(dR)]
 
     # 둘 다 비슷하다면 평균
-    return (qc_est + slope_q) / 2
+    return (thc_est + slope_q) / 2
 
 
 # ---------------------------

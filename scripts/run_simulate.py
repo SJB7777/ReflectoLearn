@@ -7,7 +7,7 @@ from refnx.reflect.structure import Structure
 from tqdm import tqdm
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.data_processing.simulate import (
+from reflectolearn.processing.simulate import (
     make_n_layer_structure,
     make_parameters,
     simulate_xrr_with_noise,

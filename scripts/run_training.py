@@ -7,9 +7,9 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.data_processing.preprocess import load_and_preprocess_data
 from reflectolearn.io import save_model
 from reflectolearn.models.model import get_model
+from reflectolearn.processing.preprocess import load_and_preprocess_data
 from reflectolearn.training.train import train_model
 
 

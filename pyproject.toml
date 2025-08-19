@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 authors = [
-    { name = "Isaac Yong", email = "isaacyong@naver.com" }
+    {name = "Isaac Yong", email = "isaacyong@naver.com"}
 ]
 
 license = { text = "MIT" }
@@ -55,17 +55,13 @@ docs = [
     "myst-parser>=0.18.0",
 ]
 
-[tool.ruff.lint]
-extend-select = ["B", "I"] # Extend default rules with flake8-bugbear and isort-related rules
-ignore = []
-
 [[tool.uv.index]]
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cu121"
 explicit = true
 
 [tool.ruff]
-line-length = 120
+line-length = 150
 target-version = "py312"
 exclude = [".git", "__pycache__", ".venv", ".eggs", "build", "dist"]
 
@@ -82,10 +78,9 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # 긴 줄 허용
-    "B008",  # 인자 기본값에 함수 호출 허용
+    "B008",
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["reflectolearn"]
-
+combine-as-imports = true
