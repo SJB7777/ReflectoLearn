@@ -1,9 +1,8 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as scp
 import scipy.optimize as optimize
 import scipy.signal.windows as fft_windows
-import matplotlib.pyplot as plt
-
 
 hc = 12.398  # Planck constant * speed of light [keV·Å]
 

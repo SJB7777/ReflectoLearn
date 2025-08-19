@@ -4,8 +4,9 @@ Global configuration manager with placeholder substitution.
 
 import re
 from pathlib import Path
-import yaml
 from typing import Any
+
+import yaml
 
 from reflectolearn.config.definitions import ExpConfig
 
