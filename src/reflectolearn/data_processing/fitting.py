@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as scp
 import scipy.signal.windows as fft_windows
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
+
 
 def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
     """
@@ -22,10 +23,8 @@ def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
     """
     # keV -> Å
     wavelength = 12.39842 / energy_keV  # [Å]
-    
     # 2θ (deg) -> θ (rad)
     theta_rad = np.radians(tth_deg / 2.0)
-    
     # qz [1/Å]
     qz = (4 * np.pi / wavelength) * np.sin(theta_rad)
     return qz
@@ -33,7 +32,6 @@ def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
 def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
     """
     Estimate critical angle qc from reflectivity curve.
-    
     Parameters
     ----------
     q : np.ndarray
@@ -42,7 +40,6 @@ def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
         Reflectivity values.
     threshold : float, optional
         Reflectivity cutoff (default = 0.99).
-    
     Returns
     -------
     qc : float
@@ -57,11 +54,11 @@ def estimate_qc(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
         qc_est = q[mask[0]]
     else:
         qc_est = q[np.argmin(R)]  # 전반사 없으면 최소값 반환
-    
+
     # 방법 2: 기울기 최대점도 같이 구해볼 수 있음
     dR = np.gradient(R, q)
     slope_q = q[np.argmin(dR)]
-    
+
     # 둘 다 비슷하다면 평균
     return (qc_est + slope_q) / 2
 
@@ -88,7 +85,6 @@ def preprocess_xrr(data, crit_ang):
     x = np.linspace(s_cor.min(), s_cor.max(), 1000)
     f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
     return x, f(x)
-
 
 
 def xrr_fft(x, y, d=None, window=2, n=None):
