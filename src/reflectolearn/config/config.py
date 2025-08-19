@@ -108,14 +108,8 @@ class ConfigManager:
     def replace_placeholders(data, context, max_iterations=10):
         """
         Recursively replace placeholders in the given data structure.
-
-        Placeholders are in the format `${key.subkey}`.
         Placeholders are in the format `${key.subkey}`.
 
-        Args:
-            data (dict, list, str, or any): Data structure containing placeholders.
-            context (dict): Context dictionary for placeholder resolution.
-            max_iterations (int): Maximum number of iterations to prevent infinite loops.
         Args:
             data (dict, list, str, or any): Data structure containing placeholders.
             context (dict): Context dictionary for placeholder resolution.
@@ -124,22 +118,7 @@ class ConfigManager:
         Returns:
             Data structure with placeholders replaced.
         """
-        Returns:
-            Data structure with placeholders replaced.
-        """
 
-        def _replace_in_string(s, ctx):
-            # Keep replacing placeholders until no more changes occur
-            for _ in range(max_iterations):
-                new_s = re.sub(
-                    r"\$\{([^}]+)\}",
-                    lambda m: str(ConfigManager.resolve_placeholder(m.group(1), ctx)),
-                    s,
-                )
-                if new_s == s:  # No changes, we're done
-                    break
-                s = new_s
-            return s
         def _replace_in_string(s, ctx):
             # Keep replacing placeholders until no more changes occur
             for _ in range(max_iterations):
@@ -188,21 +167,10 @@ class ConfigManager:
     @staticmethod
     def resolve_placeholder(placeholder, context):
         """
-        Resolve a placeholder to its corresponding value from the context.
-    @staticmethod
-    def resolve_placeholder(placeholder, context):
-        """
-        Resolve a placeholder to its corresponding value from the context.
-
-        Args:
-            placeholder (str): Placeholder string in the format `${key.subkey}`.
-            context (dict): Context dictionary containing the values.
         Args:
             placeholder (str): Placeholder string in the format `${key.subkey}`.
             context (dict): Context dictionary containing the values.
 
-        Returns:
-            Value corresponding to the placeholder.
         Returns:
             Value corresponding to the placeholder.
 
@@ -216,16 +184,7 @@ class ConfigManager:
             if value is None:
                 raise ValueError(f"Placeholder '{placeholder}' could not be resolved")
         return value
-        Raises:
-            ValueError: If the placeholder cannot be resolved.
-        """
-        keys = placeholder.split(".")
-        value = context
-        for key in keys:
-            value = value.get(key)
-            if value is None:
-                raise ValueError(f"Placeholder '{placeholder}' could not be resolved")
-        return value
+
 
 
 # 편의 함수들 (기존 API 호환성 유지)
@@ -238,9 +197,7 @@ def initialize_config(config_file: Path | str) -> ConfigManager:
         
     Returns:
         ConfigManager: Initialized config manager.
-        ConfigManager: Initialized config manager.
     """
-    return ConfigManager().initialize(config_file)
     return ConfigManager().initialize(config_file)
 
 
@@ -248,18 +205,12 @@ def load_config(reload: bool = False) -> ExpConfig:
     """
     Load the configuration using the global config manager.
     
-    Load the configuration using the global config manager.
-    
     Args:
-        reload (bool): If True, reload the configuration.
-        
         reload (bool): If True, reload the configuration.
         
     Returns:
         ExpConfig: Configuration object.
-        ExpConfig: Configuration object.
     """
-    return ConfigManager().load_config(reload=reload)
     return ConfigManager().load_config(reload=reload)
 
 
@@ -267,10 +218,7 @@ def save_config(config_dict: dict) -> None:
     """
     Save configuration using the global config manager.
     
-    Save configuration using the global config manager.
-    
     Args:
-        config_dict (dict): Configuration dictionary to save.
         config_dict (dict): Configuration dictionary to save.
     """
     ConfigManager().save_config(config_dict)
@@ -280,8 +228,6 @@ initialize_config("config.yaml")
 
 
 if __name__ == "__main__":
-    # 사용 예시
-    config_manager = initialize_config("config.yaml")
     # 사용 예시
     config_manager = initialize_config("config.yaml")
     config = load_config()
