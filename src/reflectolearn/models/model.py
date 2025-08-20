@@ -7,7 +7,7 @@ from reflectolearn.types import ModelType
 
 class XRRRegressor(nn.Module):
     def __init__(self, output_length=3):
-        super(XRRRegressor, self).__init__()
+        super().__init__()
 
         # 1D CNN feature extractor
         self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2)
@@ -35,7 +35,7 @@ class XRRRegressor(nn.Module):
 
 class XRRHybridRegressor(nn.Module):
     def __init__(self, input_length, output_length=3):
-        super(XRRHybridRegressor, self).__init__()
+        super().__init__()
 
         # Multi-kernel 1D CNN for multi-scale fringe feature capture
         self.conv_small = nn.Conv1d(1, 16, kernel_size=3, padding=1)
