@@ -8,14 +8,14 @@ from scipy.optimize import curve_fit
 def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
     """
     Convert 2theta angles (deg) to qz (1/Å) given X-ray energy.
-    
+
     Parameters
     ----------
     tth_deg : array_like
         2theta angles in degrees.
     energy_keV : float
         X-ray energy in keV.
-    
+
     Returns
     -------
     qz : np.ndarray
@@ -150,7 +150,7 @@ def fit_multi_gaussian(x, y):
     :return: popt (best parameters), pcov (covariance)
     """
     popt, pcov = curve_fit(
-        func_gauss3,
+        func_gauss3_with_noise,
         x,
         y,
         p0=[0.2, 0.3, 0.2, 7, 0.3, 0.2, 13, 0.3, 1, 2, 2e-3],
@@ -170,7 +170,7 @@ def plot_fft_fit(FFTpadx, FFTpady_n, xmask, ymask, poptGauss3):
     ax[1].plot(FFTpadx, FFTpady_n, "o-", ms=1, lw=0.7, c="dimgrey", label="data")
 
     # Combined fit
-    ax[0].plot(xmask, func_gauss3(xmask, *poptGauss3), "-", c="goldenrod", label="multi-Gaussian fit")
+    ax[0].plot(xmask, func_gauss3_with_noise(xmask, *poptGauss3), "-", c="goldenrod", label="multi-Gaussian fit")
 
     # Components
     ax[1].plot(xmask, func_gauss(xmask, *poptGauss3[2:5]), "--", c="darkblue", label="Gaussian 1")
