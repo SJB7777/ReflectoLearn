@@ -98,20 +98,14 @@ def structure2R(structure: Structure, q: np.ndarray):
 
 def add_xrr_noise(R: np.ndarray) -> np.ndarray:
     N = len(R)
-    R_poisson = apply_poisson_noise(R, s=10 ** random.uniform(6, 8))
-    uniform_noise = np.random.uniform(0.7, 1.3, N)
-    background_noise = get_background_noise(N, -7, -4)
-    curve_scaling = np.random.uniform(0.9, 1.1)
+    R_poisson = apply_poisson_noise(R, s=10 ** random.uniform(2, 5))
+    uniform_noise = np.random.uniform(0.3, 0.9, N)
+    background_noise = get_background_noise(N, -9, -7)
+    curve_scaling = np.random.uniform(0.99, 1.01)
     R_noise = R_poisson * uniform_noise * curve_scaling + background_noise
     return R_noise
 
 
 def simulate_xrr_with_noise(structure: Structure, q: np.ndarray):
-    N = len(q)
     R = structure2R(structure, q)
-    R_poisson = apply_poisson_noise(R, s=10 ** random.uniform(6, 8))
-    uniform_noise = np.random.uniform(0, 0.1, N)
-    background_noise = get_background_noise(N, -7, -4)
-    curve_scaling = np.random.uniform(0.98, 1.02)
-    R_noise = R_poisson * uniform_noise * curve_scaling + background_noise
-    return R_noise
+    return add_xrr_noise(R)
