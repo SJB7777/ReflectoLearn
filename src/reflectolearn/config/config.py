@@ -119,7 +119,7 @@ class ConfigManager:
                     for key, value in data.items()
                 }
                 # context 업데이트
-                context.update({k: v for k, v in result.items() if isinstance(v, (dict, str, int, float, bool))})
+                context.update({k: v for k, v in result.items() if isinstance(v, dict | str | int | float | bool)})
                 return result
             case list():
                 return [ConfigManager.replace_placeholders(item, context, max_iterations) for item in data]
