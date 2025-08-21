@@ -97,8 +97,8 @@ def preprocess_xrr_q(data_q: np.ndarray, q_crit: float, step_num: int = 1000):
     qz = data_q[:, 0]
     intensity = data_q[:, 1]
 
-    q_cor = np.unique(np.sqrt(np.clip(qz**2 - q_crit**2, 0, None)))
-
+    q_cor, mask = np.unique(np.sqrt(np.clip(qz**2 - q_crit**2, 0, None)), return_index=True)
+    intensity = intensity[mask]
     # Fresnel normalization (보정)
     intensity_corr = q_cor**4 * intensity
 
