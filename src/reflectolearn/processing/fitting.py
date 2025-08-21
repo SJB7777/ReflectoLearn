@@ -97,12 +97,14 @@ def preprocess_xrr_q(data_q, q_crit):
     qz = data_q[:, 0]
     intensity = data_q[:, 1]
 
+    q_cor = np.sqrt(np.clip(qz**2 - q_crit**2, 0, None))
+
     # Fresnel normalization (보정)
-    intensity_corr = qz**4 * intensity
+    intensity_corr = q_cor**4 * intensity
 
     # 등간격 보간
-    x = np.linspace(qz.min(), qz.max(), 1000)
-    f = scp.interpolate.interp1d(qz, intensity_corr, kind="cubic")
+    x = np.linspace(q_cor.min(), q_cor.max(), 1000)
+    f = scp.interpolate.interp1d(q_cor, intensity_corr, kind="cubic")
     return x, f(x)
 
 
