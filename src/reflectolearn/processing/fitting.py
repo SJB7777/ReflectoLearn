@@ -90,8 +90,8 @@ def preprocess_xrr(data, crit_ang):
 def xrr_fft(x, y, d=None, window=2, n=None):
     """
     FFT 변환 (XRR 분석 전용)
-    :param x: q 값 (전처리된 등간격 배열)
-    :param y: intensity 값
+    :param x: delta inverse q
+    :param y: intensity
     """
     if d is None:
         d = x[1] - x[0]
