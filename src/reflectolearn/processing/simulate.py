@@ -13,9 +13,9 @@ def make_parameters(n: int):
     slds: list[float] = []
     for _ in range(n):
         max_thick = 100
-        thickness = random.uniform(20, max_thick)
-        roughness = random.uniform(0, thickness * 0.06)
-        sld = random.uniform(1.0, 3.0)
+        thickness = random.uniform(30, max_thick)
+        roughness = random.uniform(0, thickness * 0.03)
+        sld = random.uniform(0.5, 2.0)
 
         thicknesses.append(thickness)
         roughnesses.append(roughness)

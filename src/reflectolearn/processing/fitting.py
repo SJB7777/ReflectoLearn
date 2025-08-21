@@ -29,13 +29,13 @@ def tth2qz_by_energy(tth_deg: np.ndarray, energy_keV: float) -> np.ndarray:
     qz = (4 * np.pi / wavelength) * np.sin(theta_rad)
     return qz
 
-def estimate_thc(th: np.ndarray, R: np.ndarray, threshold: float = 0.99):
+def estimate_q(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
     """
-    Estimate critical angle qc from reflectivity curve.
+    Estimate critical scattering vector qc from reflectivity curve.
     Parameters
     ----------
-    th : np.ndarray
-        Theta values.
+    q : np.ndarray
+        scattering vector values.
     R : np.ndarray
         Reflectivity values.
     threshold : float, optional
@@ -51,13 +51,13 @@ def estimate_thc(th: np.ndarray, R: np.ndarray, threshold: float = 0.99):
     # 방법 1: R이 threshold 아래로 내려가기 시작하는 첫 q
     mask = np.where(R < threshold)[0]
     if len(mask) > 0:
-        thc_est = th[mask[0]]
+        thc_est = q[mask[0]]
     else:
-        thc_est = th[np.argmin(R)]  # 전반사 없으면 최소값 반환
+        thc_est = q[np.argmin(R)]  # 전반사 없으면 최소값 반환
 
     # 방법 2: 기울기 최대점도 같이 구해볼 수 있음
-    dR = np.gradient(R, th)
-    slope_q = th[np.argmin(dR)]
+    dR = np.gradient(R, q)
+    slope_q = q[np.argmin(dR)]
 
     # 둘 다 비슷하다면 평균
     return (thc_est + slope_q) / 2
@@ -66,17 +66,18 @@ def estimate_thc(th: np.ndarray, R: np.ndarray, threshold: float = 0.99):
 # ---------------------------
 # XRR 전처리 + FFT
 # ---------------------------
-def preprocess_xrr(data, crit_ang):
+def preprocess_xrr(data, crit_ang, wave_length: float = 0.152):
     """
     Preprocess XRR dataset for FFT.
     :param data: numpy array with [2θ angle, intensity]
     :param crit_ang: critical angle (deg)
+    :param wave_length: wavelength (nm)
     :return: (x, y) -> rescaled evenly spaced dataset
     """
     s_cor = 2 * np.sqrt(
         (np.cos(np.pi * crit_ang / 2 / 180)) ** 2
         - (np.cos(np.pi * data[:, 0] / 2 / 180)) ** 2
-    ) / 0.152
+    ) / wave_length
 
     mask = np.logical_not(np.isnan(s_cor))
     s_cor = s_cor[mask]
@@ -84,6 +85,24 @@ def preprocess_xrr(data, crit_ang):
 
     x = np.linspace(s_cor.min(), s_cor.max(), 1000)
     f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
+    return x, f(x)
+
+def preprocess_xrr_q(data_q, q_crit):
+    """
+    Preprocess XRR dataset when input is already qz.
+    :param data_q: numpy array with [qz (1/nm), intensity]
+    :param q_crit: critical q (1/nm)
+    :return: (x, y) -> rescaled evenly spaced dataset
+    """
+    qz = data_q[:, 0]
+    intensity = data_q[:, 1]
+
+    # Fresnel normalization (보정)
+    intensity_corr = qz**4 * intensity
+
+    # 등간격 보간
+    x = np.linspace(qz.min(), qz.max(), 1000)
+    f = scp.interpolate.interp1d(qz, intensity_corr, kind="cubic")
     return x, f(x)
 
 
