@@ -87,7 +87,7 @@ def preprocess_xrr(data, crit_ang, wave_length: float = 0.152):
     f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
     return x, f(x)
 
-def preprocess_xrr_q(data_q, q_crit):
+def preprocess_xrr_q(data_q: np.ndarray, q_crit: float, step_num: int = 1000):
     """
     Preprocess XRR dataset when input is already qz.
     :param data_q: numpy array with [qz (1/nm), intensity]
@@ -97,13 +97,13 @@ def preprocess_xrr_q(data_q, q_crit):
     qz = data_q[:, 0]
     intensity = data_q[:, 1]
 
-    q_cor = np.sqrt(np.clip(qz**2 - q_crit**2, 0, None))
+    q_cor = np.unique(np.sqrt(np.clip(qz**2 - q_crit**2, 0, None)))
 
     # Fresnel normalization (보정)
     intensity_corr = q_cor**4 * intensity
 
     # 등간격 보간
-    x = np.linspace(q_cor.min(), q_cor.max(), 1000)
+    x = np.linspace(q_cor.min(), q_cor.max(), step_num)
     f = scp.interpolate.interp1d(q_cor, intensity_corr, kind="cubic")
     return x, f(x)
 
@@ -141,21 +141,35 @@ def func_noise(x, amp, ex):
     """1/f noise background"""
     return amp / np.power(x, ex)
 
-def func_gauss(p, a, pmax, w):
+def func_gauss(x, a, pmax, w):
     """Single Gaussian"""
-    return a * np.exp(-np.log(2) * ((pmax - p) / (w / 2)) ** 2)
+    return a * np.exp(-np.log(2) * ((pmax - x) / (w / 2)) ** 2)
 
-def func_gauss2(p, a1, a2, pmax1, pmax2, w1, w2):
+def func_gauss2(x, a1, a2, pmax1, pmax2, w1, w2):
     """Sum of two Gaussians"""
-    return func_gauss(p, a1, pmax1, w1) + func_gauss(p, a2, pmax2, w2)
+    return func_gauss(x, a1, pmax1, w1) + func_gauss(x, a2, pmax2, w2)
 
-def func_gauss3_with_noise(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, amp, ex, z0):
+def func_gauss3_with_noise(x, a1, w1, a2, pmax2, w2, a3, pmax3, w3, amp, ex, z0):
+    """Multi-Gaussian + noise"""
+    pmax1 = pmax3 - pmax2
+    return (
+        func_gauss2(x, a1, a2, pmax1, pmax2, w1, w2)
+        + func_gauss(x, a3, pmax3, w3)
+        + func_noise(x, amp, ex)
+        + z0
+    )
+
+def func_noise2(x, a, w):
+    """Noise Gaussian"""
+    return a * np.exp(-np.log(2) * (x / (w / 2)) ** 2)
+
+def func_gauss3_with_noise_ver2(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, a4, w4, z0):
     """Multi-Gaussian + noise"""
     pmax1 = pmax3 - pmax2
     return (
         func_gauss2(p, a1, a2, pmax1, pmax2, w1, w2)
         + func_gauss(p, a3, pmax3, w3)
-        + func_noise(p, amp, ex)
+        + func_noise2(p, a4, w4)
         + z0
     )
 
