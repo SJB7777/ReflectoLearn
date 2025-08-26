@@ -1,9 +1,23 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from loguru import logger
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
+
+
+def loss_with_prior(y_pred, y_true, prior_values=None, prior_mask=None, lambda_prior=0.1):
+    # 기본 MSE
+    loss_data = F.mse_loss(y_pred, y_true)
+
+    prior_loss = 0.0
+    if prior_values is not None and prior_mask is not None:
+        for idx in prior_mask:
+            prior_loss += F.mse_loss(y_pred[:, idx], prior_values[:, idx])
+        prior_loss /= len(prior_mask)
+
+    return loss_data + lambda_prior * prior_loss
 
 
 def train_model(

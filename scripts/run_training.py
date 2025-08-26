@@ -82,6 +82,7 @@ def main():
         output_length=output_length,
     ).to(device)
 
+
     optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
     loss_fn = nn.MSELoss()
 
