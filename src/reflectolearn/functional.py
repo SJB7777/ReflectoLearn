@@ -24,7 +24,7 @@ def pipe(*funcs: Callable):
     return reduce(lambda f, g: lambda x: g(f(x)), funcs)
 
 
-def batch_indices(total_length, batch_size):
+def batch_indices(total_length: int, batch_size: int):
     """
     total_length 길이의 배열을 batch_size 크기로 나누어
     (start, end) 인덱스 튜플을 generator로 반환

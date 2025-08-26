@@ -174,26 +174,6 @@ def func_gauss3_with_noise_ver2(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, a4, w4,
 
 
 # ---------------------------
-# Fitting 실행 유틸
-# ---------------------------
-# def fit_multi_gaussian(x, y):
-#     """
-#     Fit multi-Gaussian + noise model to FFT data
-#     :param x: frequency axis (nm)
-#     :param y: normalized fft amplitude
-#     :return: popt (best parameters), pcov (covariance)
-#     """
-#     popt, pcov = curve_fit(
-#         func_gauss3_with_noise,
-#         x,
-#         y,
-#         p0=[0.2, 0.3, 0.2, 7, 0.3, 0.2, 13, 0.3, 1, 2, 2e-3],
-#         bounds=(0, np.inf),
-#     )
-#     return popt, pcov
-
-
-# ---------------------------
 # 시각화
 # ---------------------------
 def plot_fft_fit(FFTpadx, FFTpady_n, xmask, ymask, poptGauss3):

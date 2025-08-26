@@ -24,30 +24,6 @@ def make_parameters(n: int):
     return thicknesses, roughnesses, slds
 
 
-def make_multifilm(n_layer: int, q: np.ndarray, add_noise=True):
-    thicknesses, roughnesses, slds = make_parameters(n_layer)
-    structure: Structure = make_n_layer_structure(thicknesses=thicknesses, roughnesses=roughnesses, slds=slds)
-    R = simulate_xrr_with_noise(structure, q) if add_noise else structure2R(structure, q)
-
-    return {
-        "structure": structure,
-        "thickness": thicknesses,
-        "roughness": roughnesses,
-        "sld": slds,
-        "R": R,
-    }
-
-
-def make_one_layer_structure(thickness: float, roughness: float, sld: float):
-    air = SLD(0.0, name="Air")
-    oxide = SLD(2.5, name="Oxide")
-    film = SLD(sld, name="Thin Film")
-    substrate = SLD(2.0, name="Substrate")
-
-    structure = air(0, 0) | oxide(20, 2) | film(thickness, roughness) | substrate(0, 3)
-    return structure
-
-
 def make_n_layer_structure(
     thicknesses: list[float],
     roughnesses: list[float],
@@ -68,27 +44,7 @@ def make_n_layer_structure(
     return structure
 
 
-def make_structure_2l(
-    thickness1: float,
-    roughness1: float,
-    sld1: float,
-    thickness2: float,
-    roughness2: float,
-    sld2: float,
-):
-    air = SLD(0.0, name="Air")
-    oxide = SLD(2.5, name="Oxide")
-    film1 = SLD(sld1, name="Thin Film")
-    film2 = SLD(sld2, name="Thin Film2")
-    substrate = SLD(2.0, name="Substrate")
-
-    structure = (
-        air(0, 0) | oxide(20, 2) | film2(thickness2, roughness2) | film1(thickness1, roughness1) | substrate(0, 3)
-    )
-    return structure
-
-
-def structure2R(structure: Structure, q: np.ndarray):
+def structure_to_R(structure: Structure, q: np.ndarray):
     if q[0] < 0.01:
         raise ValueError("Initial value of q is too close to 0.")
     model = ReflectModel(structure)
@@ -104,8 +60,3 @@ def add_xrr_noise(R: np.ndarray) -> np.ndarray:
     curve_scaling = np.random.uniform(0.99, 1.01)
     R_noise = R_poisson * uniform_noise * curve_scaling + background_noise
     return R_noise
-
-
-def simulate_xrr_with_noise(structure: Structure, q: np.ndarray):
-    R = structure2R(structure, q)
-    return add_xrr_noise(R)

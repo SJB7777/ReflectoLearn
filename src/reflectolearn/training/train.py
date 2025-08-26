@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
 
+# TODO: Develop this function
 def loss_with_prior(y_pred, y_true, prior_values=None, prior_mask=None, lambda_prior=0.1):
     # 기본 MSE
     loss_data = F.mse_loss(y_pred, y_true)

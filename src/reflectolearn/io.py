@@ -1,54 +1,9 @@
-import random
 from pathlib import Path
 
 import h5py
 import numpy as np
 import torch
 from tqdm import tqdm
-
-from .processing.simulate import (
-    make_structure_2l,
-    structure2R,
-)
-
-
-def main_hdf5(save_file: Path, total: int):
-    N: int = 100
-    q = np.linspace(0.005, 0.3, N)
-
-    # Create HDF5 file
-    with h5py.File(save_file, "w") as f:
-        # Save q globally at root
-        f.create_dataset("q", data=q.astype("f4"))
-        # Create "samples" group
-        samples_group = f.create_group("samples")
-
-        for i in tqdm(range(total)):
-            thickness = random.uniform(20, 1000)
-            roughness = max(random.uniform(0, 100), thickness * 0.4)
-            sld = random.uniform(1.0, 14.0)
-
-            # structure = make_one_layer_structue(thickness, roughness, sld)
-            thickness2 = random.uniform(20, 1000)
-            roughness2 = max(random.uniform(0, 100), thickness * 0.4)
-            sld2 = random.uniform(1.0, 14.0)
-            structure = make_structure_2l(thickness, roughness, sld, thickness2, roughness2, sld2)
-            R = structure2R(structure, q)
-
-            sample_name = f"sample_{i:06d}"
-            g = samples_group.create_group(sample_name)
-
-            # Create dataset for R
-            g.create_dataset("R", data=R.astype("f4"))
-
-            # Save metadata as attributes
-            g.attrs["thickness"] = thickness
-            g.attrs["roughness"] = roughness
-            g.attrs["sld"] = sld
-
-            g.attrs["thickness2"] = thickness2
-            g.attrs["roughness2"] = roughness2
-            g.attrs["sld2"] = sld2
 
 
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):

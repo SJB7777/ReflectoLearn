@@ -10,7 +10,8 @@ from reflectolearn.config import ConfigManager
 from reflectolearn.processing.simulate import (
     make_n_layer_structure,
     make_parameters,
-    simulate_xrr_with_noise,
+    structure_to_R,
+    add_xrr_noise
 )
 
 
@@ -25,8 +26,8 @@ def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int):
         for i in tqdm(range(n_sample)):
             thicknesses, roughnesses, slds = make_parameters(n_layer)
             structure: Structure = make_n_layer_structure(thicknesses=thicknesses, roughnesses=roughnesses, slds=slds)
-            R = simulate_xrr_with_noise(structure, q)
-
+            R = structure_to_R(structure, q)
+            R = add_xrr_noise(R)
             sample_name: str = f"sample_{i:06d}"
             g = samples_group.create_group(sample_name)
 
