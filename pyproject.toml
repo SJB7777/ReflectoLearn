@@ -3,7 +3,7 @@ name = "reflectolearn"
 version = "0.1.1"
 description = "Machine learning tools for X-ray reflectivity analysis"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12.*"
 
 authors = [
     {name = "Isaac Yong", email = "isaacyong@naver.com"}
@@ -24,9 +24,6 @@ dependencies = [
     "pandas",
     "scikit-learn",
     "scipy",
-    "torch",
-    "torchvision",
-    "torchaudio",
     "tqdm",
     "refnx",
     "h5py",
@@ -55,16 +52,14 @@ docs = [
     "myst-parser>=0.18.0",
 ]
 
-[[tool.uv.index]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
+[tool.uv]
+# extra 인덱스 등 GPU 빌드 관련 항목 제거
+# uv가 관리할 나머지 패키지용 기본 설정만 사용
 
 [tool.ruff]
 line-length = 150
 target-version = "py312"
 exclude = [".git", "__pycache__", ".venv", ".eggs", "build", "dist"]
-
 extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
@@ -72,14 +67,12 @@ select = [
     "E",   # PEP8 errors
     "W",   # PEP8 warnings
     "F",   # Pyflakes
-    "I",   # Import 정렬
+    "I",   # Import Order
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
 ]
-ignore = [
-    "B008",
-]
+ignore = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["reflectolearn"]

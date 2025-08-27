@@ -7,12 +7,7 @@ from refnx.reflect.structure import Structure
 from tqdm import tqdm
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.processing.simulate import (
-    make_n_layer_structure,
-    make_parameters,
-    structure_to_R,
-    add_xrr_noise
-)
+from reflectolearn.processing.simulate import add_xrr_noise, make_n_layer_structure, make_parameters, structure_to_R
 
 
 def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int):
@@ -47,8 +42,8 @@ def main():
     logger.info("Configuration loaded successfully")
 
     N: int = 100
-    n_sample: int = 1_000
-    n_layer: int = 3
+    n_sample: int = 1_000_000
+    n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 
     logger.info(f"Simulation parameters: N={N}, n_sample={n_sample:_}, n_layer={n_layer}")

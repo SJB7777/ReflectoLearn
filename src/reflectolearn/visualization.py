@@ -91,10 +91,10 @@ def plot_best_worst_fits(x_val: torch.Tensor, y_true: np.ndarray, y_pred: np.nda
 
     plt.figure(figsize=(12, 6))
     for idx in best_indices:
-        plt.plot(x_val[idx].cpu().numpy(), label=f"Best #{idx}", linewidth=1.5)
+        plt.plot(x_val[idx], label=f"Best #{idx}", linewidth=1.5)
     for idx in worst_indices:
         plt.plot(
-            x_val[idx].cpu().numpy(),
+            x_val[idx],
             linestyle="--",
             label=f"Worst #{idx}",
             linewidth=1.2,

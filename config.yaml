@@ -1,12 +1,12 @@
 project:
-  name: "p100o9"
+  name: "p100o6"
   version: "raw"
   run_id: "${project.name}_${project.version}_${model.type}"
   output_dir: "results/${project.run_id}"
 
 data:
   data_root: "F:/XRR_AI/data"
-  data_file: "${data.data_root}/p100o9_raw.h5"
+  data_file: "${data.data_root}/p100o6_raw.h5"
 
 training:
   batch_size: 256
