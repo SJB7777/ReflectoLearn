@@ -12,7 +12,7 @@ from reflectolearn.processing.simulate import add_xrr_noise, make_n_layer_struct
 
 
 def simulate_one(idx: int, n_layer: int, q: np.ndarray, has_noise: bool):
-    """한 샘플 생성"""
+    """Make one sample"""
     thicknesses, roughnesses, slds = make_parameters(n_layer)
     structure: Structure = make_n_layer_structure(thicknesses, roughnesses, slds)
     R = structure_to_R(structure, q)
@@ -36,24 +36,15 @@ def make_xrr_hdf5(
     batch_size: int = 1000,
 ):
     """
-    대규모 XRR HDF5 데이터셋 생성
-
-    Args:
-        save_file: 저장할 HDF5 경로
-        n_layer: 층 개수
-        q: q 벡터 (길이 N)
-        n_sample: 총 샘플 수
-        has_noise: 노이즈 추가 여부
-        n_workers: 병렬 워커 수 (기본값 = CPU 코어 수)
-        batch_size: 저장 배치 크기 (기본=1000)
+    Generate large XRR HDF5 Dataset
     """
     N = len(q)
 
     with h5py.File(save_file, "w") as f:
-        # q 저장
+        # Save q
         f.create_dataset("q", data=q.astype("f4"))
 
-        # 대규모 dataset 생성 (압축, chunking 적용)
+        # Make large dataset
         dR = f.create_dataset(
             "R",
             shape=(n_sample, N),
@@ -62,32 +53,35 @@ def make_xrr_hdf5(
             chunks=(batch_size, N),
         )
         dT = f.create_dataset(
-            "thicknesses",
+            "thickness",
             shape=(n_sample, n_layer),
             dtype="f4",
             compression="lzf",
             chunks=(batch_size, n_layer),
         )
         dRough = f.create_dataset(
-            "roughnesses",
+            "roughness",
             shape=(n_sample, n_layer),
             dtype="f4",
             compression="lzf",
             chunks=(batch_size, n_layer),
         )
         dSLD = f.create_dataset(
-            "slds",
+            "sld",
             shape=(n_sample, n_layer),
             dtype="f4",
             compression="lzf",
             chunks=(batch_size, n_layer),
         )
 
-        # 병렬 실행
+        # Parallel processing
         with ProcessPoolExecutor(max_workers=n_workers) as executor:
-            for batch_start in tqdm(range(0, n_sample, batch_size)):
+            pbar = tqdm(range(0, n_sample, batch_size), total=n_sample)
+            for batch_start in pbar:
                 batch_end = min(batch_start + batch_size, n_sample)
+
                 batch_indices = range(batch_start, batch_end)
+                pbar.update(len(batch_indices))
 
                 results = list(
                     executor.map(
@@ -96,7 +90,7 @@ def make_xrr_hdf5(
                         [n_layer] * len(batch_indices),
                         [q] * len(batch_indices),
                         [has_noise] * len(batch_indices),
-                        chunksize=50,  # 워커당 작업 단위
+                        chunksize=max(1, n_sample // (n_workers * 8)),
                     )
                 )
 
@@ -106,6 +100,7 @@ def make_xrr_hdf5(
                     dT[idx] = T
                     dRough[idx] = Rough
                     dSLD[idx] = SLD
+
 
 def main():
     import psutil
