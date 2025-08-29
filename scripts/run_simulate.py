@@ -3,7 +3,6 @@ from pathlib import Path
 
 import h5py
 import numpy as np
-from loguru import logger
 from refnx.reflect.structure import Structure
 from tqdm import tqdm
 
@@ -111,6 +110,10 @@ def make_xrr_hdf5(
 def main():
     import psutil
 
+    from reflectolearn.logger import setup_logger
+
+
+    logger = setup_logger()
     logger.info("Starting XRR simulation")
     ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
@@ -121,16 +124,18 @@ def main():
     n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 
-    n_worker: int = psutil.cpu_count(logical=True) // 2
-    batch_size: int = 1000
+    n_worker: int = psutil.cpu_count(logical=True) - 1
+    batch_size: int = 500
     logger.info(f"Simulation parameters: N={N}, n_sample={n_sample:_}, n_layer={n_layer}")
     logger.info(f"Q range: {q[0]:.3f} to {q[-1]:.3f}")
+
+    logger.info(f"Number of worker: {n_worker}")
+    logger.info(f"Batch_size: {n_worker}")
 
     data_file: Path = config.path.data_file
     data_file = next_unique_file(data_file)
     logger.info(f"Output file: {data_file}")
 
-    logger.info(f"Number of worker: {n_worker}")
     logger.info("Generating XRR data...")
     make_xrr_hdf5(
         save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample, has_noise=False,
