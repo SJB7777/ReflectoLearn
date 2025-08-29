@@ -62,12 +62,11 @@ def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: i
     return train_loader, val_loader
 
 
-def guessing(q, R):
+def guessing(q, R) -> None | tuple[float, float]:
 
     x_upper_bound = 200
     crit_q = estimate_q(q, R)
-    # crit_q = 0
-    print(f"Estimated critical q: {crit_q:.4f}")
+    crit_q = 0
 
     # FFT
     dat = np.stack([q, R], axis=1)
@@ -76,26 +75,17 @@ def guessing(q, R):
     x_fft = x_fft * 2 * np.pi
     y_fft_norm = y_fft / y_fft[0]
 
-    # Find Peaks
-    idx_local_max = argrelmax(y_fft_norm[x_fft < x_upper_bound])
-    print(idx_local_max)
-
-
-    print(f"{x_fft[idx_local_max] = }")
-
     # First increasing index
     y_diff = np.diff(y_fft_norm)
     under_bound_index = np.where((y_diff >= -0.01) & (x_fft[1:] > 2))[0][0] + 1
 
-    x_under_bound = x_fft[under_bound_index]
-    print(f"{x_under_bound=}")
     upper_bound_index = np.where(x_fft > x_upper_bound)[0][0]
-
-    print(x_fft[under_bound_index], x_fft[upper_bound_index])
 
     # fitting range
     x_fit, y_fit = x_fft[under_bound_index: upper_bound_index + 1], y_fft_norm[under_bound_index: upper_bound_index + 1]
 
+    # Find Peaks
+    idx_local_max = argrelmax(y_fit[x_fit < x_upper_bound])
 
     # local maxima들의 인덱스와 값
     y_local = y_fit[idx_local_max]
@@ -107,22 +97,23 @@ def guessing(q, R):
         top2_x = x_local[top2_indices]                   # 그 두 점의 x 위치
     else:
         top_indices = np.argsort(y_local)[0]          # 상위 2개 (y 값 기준)
-        top2_x = x_local[top_indices]  
+        top2_x = x_local[top_indices]
 
     # 왼쪽/오른쪽 순서 정렬
-    top2_sorted = np.sort(top2_x)
+    if top2_x.size == 0:
+        return None
+    if top2_x.size == 1:
+        top2_x = np.array([top2_x]*2)
+    else:
+        top2_x = np.sort(top2_x)
+    pmax2, pmax3 = top2_x[0], top2_x[1]
 
-    # 결과 할당
-    if len(top2_sorted) == 1:
-        top2_sorted = np.array([top2_sorted[0]]*2)
-    pmax2, pmax3 = top2_sorted[0], top2_sorted[1]
-    print(pmax2, pmax3)
-
-
-    params: list[str]= ["a1", "w1", "a2", "pmax2", "w2", "a3", "pmax3", "w3", "a4", "w4", "z0"]
+    # params: list[str]= ["a1", "w1", "a2", "pmax2", "w2", "a3", "pmax3", "w3", "a4", "w4", "z0"]
     p0: list[float] = [0.1, 5, 0.1, pmax2, 5, 0.1, pmax3, 5, 1, 10, 0.001]
-    print(f"Initial guess:\n{list(zip(params, p0, strict=True))}")
-    popt, pcov = multi_gaussian_fitting2(x_fit, y_fit, p0)
+    try:
+        popt, pcov = multi_gaussian_fitting2(x_fit, y_fit, p0)
+    except RuntimeError:
+        return None
 
     pos2 = popt[3]
     pos3 = popt[6]
@@ -140,19 +131,20 @@ def main():
 
     device, num_workers = get_device_and_workers()
     logger.info(f"Using device: {device}")
+    logger.info(f"Number of workers: {num_workers}")
 
     data_file = config.data.data_file
 
-    # x_all, y_all_scaled, scaler = load_and_preprocess_data(data_file, config.project.version)
     data = get_data(data_file)
-    qs = data["q"]
+    q = data["q"]
     y_array = data["params"].astype(np.float32)
+    guesses: list[None | tuple[float, float]] = [guessing(q, R) for R in data["Rs"]]
 
-    guesses = [list(guessing(q, R)) for q, R in zip(qs, y_array, strict=True)]
     scaler = StandardScaler()
     y_scaled = scaler.fit_transform(y_array)
     y_tensor = torch.tensor(y_scaled, dtype=torch.float32)
-    print(guesses)
+
+    
     # train_loader, val_loader = prepare_dataloaders(
     #     x_all,
     #     y_all_scaled,

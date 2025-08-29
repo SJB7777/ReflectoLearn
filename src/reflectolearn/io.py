@@ -53,6 +53,10 @@ def get_data(path: Path):
                     Shape: (n_sample, n_layer * 3) where each row is
                     [t0, r0, sld0, t1, r1, sld1, ...]
     """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"File {str(path)} not found")
+
     Rs = []
     params = []
 

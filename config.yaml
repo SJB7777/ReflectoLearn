@@ -5,7 +5,7 @@ project:
   output_dir: "results/${project.run_id}"
 
 data:
-  data_root: "F:/XRR_AI/data"
+  data_root: "D:\\03_Resources\\Experiment\\Data\\XRR_AI\\data"
   data_file: "${data.data_root}/p100o6_raw.h5"
 
 training:

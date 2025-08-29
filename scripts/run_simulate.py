@@ -10,7 +10,7 @@ from reflectolearn.config import ConfigManager
 from reflectolearn.processing.simulate import add_xrr_noise, make_n_layer_structure, make_parameters, structure_to_R
 
 
-def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int):
+def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int, has_noise: bool = True):
     # Create HDF5 file
     with h5py.File(save_file, "w") as f:
         # Save q globally at root
@@ -22,7 +22,8 @@ def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int):
             thicknesses, roughnesses, slds = make_parameters(n_layer)
             structure: Structure = make_n_layer_structure(thicknesses=thicknesses, roughnesses=roughnesses, slds=slds)
             R = structure_to_R(structure, q)
-            R = add_xrr_noise(R)
+            if has_noise:
+                R = add_xrr_noise(R)
             sample_name: str = f"sample_{i:06d}"
             g = samples_group.create_group(sample_name)
 
@@ -42,7 +43,7 @@ def main():
     logger.info("Configuration loaded successfully")
 
     N: int = 100
-    n_sample: int = 1_000_000
+    n_sample: int = 1_000
     n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 
@@ -53,7 +54,7 @@ def main():
     logger.info(f"Output file: {data_file}")
 
     logger.info("Generating XRR data...")
-    make_xrr_hdf5(save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample)
+    make_xrr_hdf5(save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample, has_noise=False)
 
     logger.info("XRR simulation data saved successfully")
 
