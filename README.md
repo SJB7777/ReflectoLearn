@@ -65,24 +65,24 @@ The project uses a `config.yaml` file to manage all the important parameters, su
 
 ```yaml
 project:
-  name: "p100o9"
-  type: "q4"
-  run_id: "${project.name}_${project.type}_${model.name}"
-  output_dir: "results/${project.run_id}"
+  name: "p300o6"
+  version: "raw"
+  run_id: "${project.name}_${project.version}_${training.type}"
 
-data:
-  data_root: "D:/XRR_AI/hdf5_XRR/data" # Example directory
-  data_file: "${path.data_root}/p100o9.h5"
-  output_root: "results/${project.run_id}"
+path:
+  log_dir: ./logs
+  data_root: "D:\\XRR_AI\\hdf5_XRR\\data"
+  data_file: "${path.data_root}/${project.name}_${project.version}.h5"
+  output_dir: "./results"
 
 training:
   batch_size: 256
   epochs: 200
   learning_rate: 0.001
   seed: 42
+  patience: 50
+  type: "hybrid"
 
-model:
-  name: "hybrid"
 ```
 
 ## Contributing
