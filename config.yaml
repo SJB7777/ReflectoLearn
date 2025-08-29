@@ -5,7 +5,8 @@ project:
 
 path:
   log_dir: ./logs
-  data_root: "D:\\03_Resources\\Experiment\\Data\\XRR_AI\\data"
+  # data_root: "D:\\03_Resources\\Experiment\\Data\\XRR_AI\\data"
+  data_root: "X:\\XRR_AI\\hdf5_XRR\\data"
   data_file: "${path.data_root}/${project.name}_${project.version}.h5"
   output_dir: "./results"
 
