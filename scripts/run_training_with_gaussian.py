@@ -9,13 +9,14 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.config import ConfigManager
 from reflectolearn.io import get_data
+from reflectolearn.math_utils import normalize
+from reflectolearn.models.model import get_model
 from reflectolearn.processing.fitting import (
     estimate_q,
     func_gauss3_with_noise_ver2,
     preprocess_xrr_q,
     xrr_fft,
 )
-from reflectolearn.processing.preprocess import load_and_preprocess_data
 
 
 def multi_gaussian_fitting2(x_fit, y_fit, p0):
@@ -135,33 +136,38 @@ def main():
 
     data_file = config.data.data_file
 
+    # Data Loading
     data = get_data(data_file)
     q = data["q"]
-    y_array = data["params"].astype(np.float32)
+    y_array = data["params"].astype(np.float32)  # Shape: (n_samples, n_params)
     guesses: list[None | tuple[float, float]] = [guessing(q, R) for R in data["Rs"]]
 
+    # Thickness prior estimation
     scaler = StandardScaler()
     y_scaled = scaler.fit_transform(y_array)
-    y_tensor = torch.tensor(y_scaled, dtype=torch.float32)
+    y_all = torch.tensor(y_scaled, dtype=torch.float32)
 
-    
-    # train_loader, val_loader = prepare_dataloaders(
-    #     x_all,
-    #     y_all_scaled,
-    #     batch_size=config.training.batch_size,
-    #     seed=seed,
-    #     num_workers=num_workers,
-    # )
+    reflectivity = torch.tensor(data["Rs"], dtype=torch.float32)
+    x_all = normalize(reflectivity)
+    train_loader, val_loader = prepare_dataloaders(
+        x_all,
+        y_all,
+        batch_size=config.training.batch_size,
+        seed=seed,
+        num_workers=num_workers,
+    )
 
-    # input_length: int = x_all.shape[1]
-    # output_length: int = y_all_scaled.shape[1]
-    # logger.info(f"Input length: {input_length}")
-    # logger.info(f"Input length: {output_length}")
-    # model = get_model(
-    #     model_type=config.model.type,
-    #     input_length=input_length,
-    #     output_length=output_length,
-    # ).to(device)
+    input_length: int = x_all.shape[1]
+    output_length: int = y_all.shape[1]
+    logger.info(f"Input length: {input_length}")
+    logger.info(f"Input length: {output_length}")
+    model = get_model(
+        model_type=config.model.type,
+        input_length=input_length,
+        output_length=output_length,
+    ).to(device)
+
+    for epoch in range(num_epochs):
 
 
     # optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
