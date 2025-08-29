@@ -13,6 +13,7 @@ Example usage:
     logger.info("This is an info message.")
 """
 
+import inspect
 from pathlib import Path
 
 import loguru
@@ -28,6 +29,10 @@ def setup_logger() -> Logger:
     Returns:
         Logger: The configured logger instance.
     """
+    caller_frame = inspect.stack()[1]
+    caller_file = Path(caller_frame.filename).resolve()  # 파일 이름만
+    caller_line = caller_frame.lineno
+
     ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
     log_dir: Path = config.path.log_dir
@@ -36,6 +41,7 @@ def setup_logger() -> Logger:
     log_file: str = log_dir / "{time:YYYY-MM-DD}/{time:YYYYMMDD_HHmmss}.log"
     loguru.logger.add(log_file, format=formatter, rotation="500 MB", compression="zip")
 
+    loguru.logger.info(f"Logger setup called from \"{caller_file}:{caller_line}\"")
     return loguru.logger
 
 
