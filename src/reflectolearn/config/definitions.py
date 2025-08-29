@@ -53,5 +53,5 @@ class ExpConfig(BaseModel):
     """
 
     project: ProjectConfig = Field(..., description="Project configuration")
-    path: PathConfig = Field(..., "Directory configuration")
+    path: PathConfig = Field(..., description="Directory configuration")
     training: TrainingConfig = Field(..., description="Training configuration")

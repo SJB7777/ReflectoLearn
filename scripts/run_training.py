@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.io import save_model
+from reflectolearn.io import save_model, append_timestamp
 from reflectolearn.models.model import get_model
 from reflectolearn.processing.preprocess import load_and_preprocess_data
 from reflectolearn.training.train import train_model
@@ -99,10 +99,8 @@ def main():
     )
     logger.info("Model training finished.")
     # === Directories ===
-    result_dir = config.path.output_dir
-
-    for d in [result_dir, result_dir, result_dir]:
-        d.mkdir(parents=True, exist_ok=True)
+    result_dir = append_timestamp(config.path.output_dir)
+    result_dir.mkdir(parents=True, exist_ok=True)
 
     # === Save model ===
     model_path = result_dir / "model.pt"

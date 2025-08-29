@@ -14,7 +14,7 @@ from reflectolearn.models.model import get_model
 from reflectolearn.processing.fitting import (
     estimate_q,
     func_gauss3_with_noise_ver2,
-    s_vector_transform_q,
+    preprocess_xrr_q,
     xrr_fft,
 )
 
@@ -70,7 +70,7 @@ def guessing(q, R) -> None | tuple[float, float]:
 
     # FFT
     dat = np.stack([q, R], axis=1)
-    xproc, yproc = s_vector_transform_q(dat, crit_q)
+    xproc, yproc = preprocess_xrr_q(dat, crit_q)
     x_fft, y_fft = xrr_fft(xproc, yproc, window=2, n=10000)
     x_fft = x_fft * 2 * np.pi
     y_fft_norm = y_fft / y_fft[0]

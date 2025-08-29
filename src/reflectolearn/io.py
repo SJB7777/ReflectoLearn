@@ -1,10 +1,27 @@
 import re
+from datetime import datetime
 from pathlib import Path
 
 import h5py
 import numpy as np
 import torch
 from tqdm import tqdm
+
+
+def append_timestamp(path: str | Path) -> Path:
+    """
+    Append a timestamp to a path (file or directory) to make it unique.
+    The exact naming format is not fixed.
+    """
+    path = Path(path)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    if path.suffix:
+        new_name = f"{path.stem}_{timestamp}{path.suffix}"
+    else:
+        new_name = f"{path.name}_{timestamp}"
+
+    return path.parent / new_name
 
 
 def next_unique_file(path: Path | str) -> Path:
