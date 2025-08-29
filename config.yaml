@@ -1,12 +1,13 @@
 project:
-  name: "p100o6"
+  name: "p300o6"
   version: "raw"
-  run_id: "${project.name}_${project.version}_${model.type}"
-  output_dir: "results/${project.run_id}"
+  run_id: "${project.name}_${project.version}_${training.type}"
 
-data:
+path:
+  log_dir: ./logs
   data_root: "D:\\03_Resources\\Experiment\\Data\\XRR_AI\\data"
-  data_file: "${data.data_root}/p100o6_raw.h5"
+  data_file: "${path.data_root}/${project.name}_${project.version}.h5"
+  output_dir: "results/${project.run_id}"
 
 training:
   batch_size: 256
@@ -14,6 +15,4 @@ training:
   learning_rate: 0.001
   seed: 42
   patience: 50
-
-model:
   type: "hybrid"

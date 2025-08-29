@@ -60,7 +60,7 @@ def main():
     device, num_workers = get_device_and_workers()
     logger.info(f"Using device: {device}")
 
-    data_file = config.data.data_file
+    data_file = config.path.data_file
 
     x_all, y_all_scaled, scaler = load_and_preprocess_data(data_file, config.project.version)
 
@@ -77,7 +77,7 @@ def main():
     logger.info(f"Input length: {input_length}")
     logger.info(f"Input length: {output_length}")
     model = get_model(
-        model_type=config.model.type,
+        model_type=config.training.type,
         input_length=input_length,
         output_length=output_length,
     ).to(device)
@@ -99,7 +99,7 @@ def main():
     )
     logger.info("Model training finished.")
     # === Directories ===
-    result_dir = config.project.output_dir
+    result_dir = config.path.output_dir
 
     for d in [result_dir, result_dir, result_dir]:
         d.mkdir(parents=True, exist_ok=True)

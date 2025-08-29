@@ -11,7 +11,7 @@ from reflectolearn.config.definitions import ExpConfig
 
 
 class ConfigManager:
-    # 전역 상태 (싱글턴 역할)
+    # Global State (Singleton role)
     _config_file: Path | str | None = None
     _cached_config: ExpConfig | None = None
 
@@ -118,7 +118,6 @@ class ConfigManager:
                     key: ConfigManager.replace_placeholders(value, context, max_iterations)
                     for key, value in data.items()
                 }
-                # context 업데이트
                 context.update({k: v for k, v in result.items() if isinstance(v, dict | str | int | float | bool)})
                 return result
             case list():

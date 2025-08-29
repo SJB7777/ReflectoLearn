@@ -10,10 +10,10 @@ def main():
     config = ConfigManager.load_config()
     logger.info(f"Config: {config}")
 
-    raw_file = config.data.data_file
+    raw_file = config.path.data_file
     raw_name = raw_file.stem
     project_version = config.project.version
-    preprocessed_file = config.data.data_root / f"{raw_name}_{project_version}.h5"
+    preprocessed_file = config.path.data_root / f"{raw_name}_{project_version}.h5"
 
     # Preprocess the raw data
     preprocess_file(raw_file, preprocessed_file)

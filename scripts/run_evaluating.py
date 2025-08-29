@@ -18,11 +18,11 @@ def load_evaluation_assets(device: torch.device):
     ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
 
-    output_root: Path = config.project.output_dir
+    output_root: Path = config.path.output_dir
     model_file: Path = output_root / "model.pt"
     scaler_file: Path = output_root / "scaler.pkl"
     stats_file: Path = output_root / "stats.npz"
-    data_file: Path = config.data.data_file
+    data_file: Path = config.path.data_file
 
     logger.info(f"[INFO] Loading model from: {model_file}")
     logger.info(f"[INFO] Loading scaler from: {scaler_file}")
@@ -48,7 +48,7 @@ def load_evaluation_assets(device: torch.device):
     logger.info(f"Input Length: {input_length}")
     logger.info(f"Output Length: {output_length}")
     model = get_model(
-        config.model.type,
+        config.training.type,
         input_length=input_length,
         output_length=output_length,
     )

@@ -18,16 +18,17 @@ class ProjectConfig(BaseModel):
     name: str = Field(..., description="Name of the project")
     version: DataVersion = Field(..., description="Type of the project")
     run_id: str = Field(..., description="Unique identifier for the experiment run")
-    output_dir: Path = Field(..., description="Directory where results will be saved")
 
 
-class DataConfig(BaseModel):
+class PathConfig(BaseModel):
     """
-    Configuration for data paths and related parameters.
+    Configuration for directories.
     """
 
+    log_dir: Path = Field(..., description="Path to the logging files")
     data_root: Path = Field(..., description="Directory containing the input data files")
     data_file: Path = Field(..., description="Path to the input data file")
+    output_dir: Path = Field(..., description="Directory where results will be saved")
 
 
 class TrainingConfig(BaseModel):
@@ -43,13 +44,6 @@ class TrainingConfig(BaseModel):
         50,
         description="Number of epochs to wait for improvement before stopping training (Early Stopping)",
     )
-
-
-class ModelConfig(BaseModel):
-    """
-    Configuration for the model architecture and parameters.
-    """
-
     type: ModelType = Field(..., description="Type of the model (e.g., 'hybrid', 'cnn')")
 
 
@@ -59,6 +53,5 @@ class ExpConfig(BaseModel):
     """
 
     project: ProjectConfig = Field(..., description="Project configuration")
-    data: DataConfig = Field(..., description="Data configuration")
+    path: PathConfig = Field(..., "Directory configuration")
     training: TrainingConfig = Field(..., description="Training configuration")
-    model: ModelConfig = Field(..., description="Model configuration")

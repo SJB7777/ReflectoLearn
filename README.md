@@ -72,7 +72,7 @@ project:
 
 data:
   data_root: "D:/XRR_AI/hdf5_XRR/data" # Example directory
-  data_file: "${data.data_root}/p100o9.h5"
+  data_file: "${path.data_root}/p100o9.h5"
   output_root: "results/${project.run_id}"
 
 training:

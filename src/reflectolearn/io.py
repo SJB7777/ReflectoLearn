@@ -1,9 +1,46 @@
+import re
 from pathlib import Path
 
 import h5py
 import numpy as np
 import torch
 from tqdm import tqdm
+
+
+def next_unique_file(path: Path | str) -> Path:
+    """
+    Generate a unique file path.
+    - If no file exists with the same name, return the original path.
+    - If files exist, append (n) where n = max existing number + 1.
+
+    Example:
+        file.txt       -> file.txt        (if doesn't exist)
+        file.txt       -> file(1).txt     (if file.txt exists)
+        file(1).txt    -> file(2).txt     (if file(1).txt exists)
+    """
+    path = Path(path)
+    parent = path.parent
+    stem = path.stem
+    suffix = path.suffix
+
+    # Regular expression: Find '(number)' end of the stem.
+    pattern = re.compile(rf"^{re.escape(stem)}(?:\((\d+)\))?$")
+
+    # Find same patterns
+    existing = [f for f in parent.glob(f"{stem}*{suffix}") if pattern.match(f.stem)]
+
+    if not existing:
+        return path
+
+    max_n = 0
+    for f in existing:
+        m = pattern.match(f.stem)
+        if m and m.group(1):
+            n = int(m.group(1))
+            if n > max_n:
+                max_n = n
+
+    return parent / f"{stem}({max_n + 1}){suffix}"
 
 
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):

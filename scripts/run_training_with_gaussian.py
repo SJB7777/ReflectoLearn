@@ -14,7 +14,7 @@ from reflectolearn.models.model import get_model
 from reflectolearn.processing.fitting import (
     estimate_q,
     func_gauss3_with_noise_ver2,
-    preprocess_xrr_q,
+    s_vector_transform_q,
     xrr_fft,
 )
 
@@ -67,23 +67,21 @@ def guessing(q, R) -> None | tuple[float, float]:
 
     x_upper_bound = 200
     crit_q = estimate_q(q, R)
-    crit_q = 0
 
     # FFT
     dat = np.stack([q, R], axis=1)
-    xproc, yproc = preprocess_xrr_q(dat, crit_q)
+    xproc, yproc = s_vector_transform_q(dat, crit_q)
     x_fft, y_fft = xrr_fft(xproc, yproc, window=2, n=10000)
     x_fft = x_fft * 2 * np.pi
     y_fft_norm = y_fft / y_fft[0]
 
     # First increasing index
     y_diff = np.diff(y_fft_norm)
-    under_bound_index = np.where((y_diff >= -0.01) & (x_fft[1:] > 2))[0][0] + 1
-
-    upper_bound_index = np.where(x_fft > x_upper_bound)[0][0]
+    idx_lb = np.where((y_diff >= -0.01) & (x_fft[1:] > 2))[0][0] + 1
+    idx_ub = np.where(x_fft > x_upper_bound)[0][0]
 
     # fitting range
-    x_fit, y_fit = x_fft[under_bound_index: upper_bound_index + 1], y_fft_norm[under_bound_index: upper_bound_index + 1]
+    x_fit, y_fit = x_fft[idx_lb: idx_ub + 1], y_fft_norm[idx_lb: idx_ub + 1]
 
     # Find Peaks
     idx_local_max = argrelmax(y_fit[x_fit < x_upper_bound])
@@ -92,21 +90,14 @@ def guessing(q, R) -> None | tuple[float, float]:
     y_local = y_fit[idx_local_max]
     x_local = x_fit[idx_local_max]
 
-    # 값이 큰 상위 2개 인덱스 추출
-    if len(y_local) > 1:
-        top2_indices = np.argsort(y_local)[-2:]          # 상위 2개 (y 값 기준)
-        top2_x = x_local[top2_indices]                   # 그 두 점의 x 위치
-    else:
-        top_indices = np.argsort(y_local)[0]          # 상위 2개 (y 값 기준)
-        top2_x = x_local[top_indices]
-
-    # 왼쪽/오른쪽 순서 정렬
-    if top2_x.size == 0:
+    if y_local.size == 1:
         return None
-    if top2_x.size == 1:
-        top2_x = np.array([top2_x]*2)
+    if y_local.size == 1:
+        top2_x = np.array([x_local[0], x_local[0]])            # 그 두 점의 x 위치
     else:
-        top2_x = np.sort(top2_x)
+        top2_idx = np.argsort(y_local)[-2:]          # 상위 2개 (y 값 기준)
+        top2_x = np.sort(x_local[top2_idx])
+
     pmax2, pmax3 = top2_x[0], top2_x[1]
 
     # params: list[str]= ["a1", "w1", "a2", "pmax2", "w2", "a3", "pmax3", "w3", "a4", "w4", "z0"]
@@ -119,7 +110,7 @@ def guessing(q, R) -> None | tuple[float, float]:
     pos2 = popt[3]
     pos3 = popt[6]
     pos1 = pos3-pos2
-    return pos1, pos2  # thickness1, thickness2
+    return pos1, pos2  # thickness1->y[1], thickness2->y[3]
 
 
 def main():
@@ -134,14 +125,14 @@ def main():
     logger.info(f"Using device: {device}")
     logger.info(f"Number of workers: {num_workers}")
 
-    data_file = config.data.data_file
+    data_file = config.path.data_file
 
     # Data Loading
     data = get_data(data_file)
     q = data["q"]
     y_array = data["params"].astype(np.float32)  # Shape: (n_samples, n_params)
     guesses: list[None | tuple[float, float]] = [guessing(q, R) for R in data["Rs"]]
-
+    print(guesses.count(None))
     # Thickness prior estimation
     scaler = StandardScaler()
     y_scaled = scaler.fit_transform(y_array)
@@ -162,12 +153,10 @@ def main():
     logger.info(f"Input length: {input_length}")
     logger.info(f"Input length: {output_length}")
     model = get_model(
-        model_type=config.model.type,
+        model_type=config.training.type,
         input_length=input_length,
         output_length=output_length,
     ).to(device)
-
-    for epoch in range(num_epochs):
 
 
     # optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
@@ -186,7 +175,7 @@ def main():
     # )
     # logger.info("Model training finished.")
     # # === Directories ===
-    # result_dir = config.project.output_dir
+    # result_dir = config.path.output_dir
 
     # for d in [result_dir, result_dir, result_dir]:
     #     d.mkdir(parents=True, exist_ok=True)

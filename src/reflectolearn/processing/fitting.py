@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy as scp
 import scipy.signal.windows as fft_windows
@@ -65,7 +64,7 @@ def estimate_q(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
 # ---------------------------
 # XRR 전처리 + FFT
 # ---------------------------
-def preprocess_xrr(data, crit_ang, wave_length: float = 0.152):
+def s_vector_transform(data, crit_ang, wave_length: float = 0.152):
     """
     Preprocess XRR dataset for FFT.
     :param data: numpy array with [2θ angle, intensity]
@@ -86,7 +85,7 @@ def preprocess_xrr(data, crit_ang, wave_length: float = 0.152):
     f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
     return x, f(x)
 
-def preprocess_xrr_q(data_q: np.ndarray, q_crit: float, step_num: int = 1000):
+def s_vector_transform_q(data_q: np.ndarray, q_crit: float, step_num: int = 1000):
     """
     Preprocess XRR dataset when input is already qz.
     :param data_q: numpy array with [qz (1/nm), intensity]
@@ -171,32 +170,3 @@ def func_gauss3_with_noise_ver2(p, a1, w1, a2, pmax2, w2, a3, pmax3, w3, a4, w4,
         + func_noise2(p, a4, w4)
         + z0
     )
-
-
-# ---------------------------
-# 시각화
-# ---------------------------
-def plot_fft_fit(FFTpadx, FFTpady_n, xmask, ymask, poptGauss3):
-    fig, ax = plt.subplots(2, 1, sharex=True, sharey=True)
-
-    # Raw data
-    ax[0].plot(FFTpadx, FFTpady_n, "o-", ms=1, lw=0.7, c="dimgrey", label="data")
-    ax[1].plot(FFTpadx, FFTpady_n, "o-", ms=1, lw=0.7, c="dimgrey", label="data")
-
-    # Combined fit
-    ax[0].plot(xmask, func_gauss3_with_noise(xmask, *poptGauss3), "-", c="goldenrod", label="multi-Gaussian fit")
-
-    # Components
-    ax[1].plot(xmask, func_gauss(xmask, *poptGauss3[2:5]), "--", c="darkblue", label="Gaussian 1")
-    ax[1].plot(xmask, func_gauss(xmask, poptGauss3[0], poptGauss3[6]-poptGauss3[3], poptGauss3[1]), "--", c="purple", label="Gaussian 2")
-    ax[1].plot(xmask, func_gauss(xmask, *poptGauss3[5:8]), "--", c="teal", label="Gaussian 3")
-    ax[1].plot(xmask, func_noise(xmask, *poptGauss3[8:10]), "--", c="chocolate", label="1/f^α")
-
-    ax[0].set_ylabel("normalized FFT amplitude")
-    ax[1].set_xlabel("thickness (nm)")
-    ax[0].set_xlim(0, 35)
-    ax[0].set_ylim(0, 0.45)
-
-    ax[0].legend()
-    ax[1].legend()
-    plt.show()

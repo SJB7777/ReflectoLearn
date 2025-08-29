@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from reflectolearn.config import ConfigManager
 from reflectolearn.processing.simulate import add_xrr_noise, make_n_layer_structure, make_parameters, structure_to_R
-
+from reflectolearn.io import next_unique_file
 
 def make_xrr_hdf5(save_file: Path, n_layer: int, q: np.ndarray, n_sample: int, has_noise: bool = True):
     # Create HDF5 file
@@ -42,15 +42,16 @@ def main():
     config = ConfigManager.load_config()
     logger.info("Configuration loaded successfully")
 
-    N: int = 100
-    n_sample: int = 1_000
+    N: int = 300
+    n_sample: int = 1_000_000
     n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 
     logger.info(f"Simulation parameters: N={N}, n_sample={n_sample:_}, n_layer={n_layer}")
     logger.info(f"Q range: {q[0]:.3f} to {q[-1]:.3f}")
 
-    data_file: Path = config.data.data_file
+    data_file: Path = config.path.data_file
+    data_file = next_unique_file(data_file)
     logger.info(f"Output file: {data_file}")
 
     logger.info("Generating XRR data...")
