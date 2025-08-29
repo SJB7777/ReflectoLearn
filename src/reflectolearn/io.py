@@ -32,8 +32,8 @@ def next_unique_file(path: Path | str) -> Path:
 
     Example:
         file.txt       -> file.txt        (if doesn't exist)
-        file.txt       -> file(1).txt     (if file.txt exists)
-        file(1).txt    -> file(2).txt     (if file(1).txt exists)
+        file.txt       -> file (1).txt     (if file.txt exists)
+        file (1).txt    -> file (2).txt     (if file(1).txt exists)
     """
     path = Path(path)
     parent = path.parent
@@ -57,7 +57,7 @@ def next_unique_file(path: Path | str) -> Path:
             if n > max_n:
                 max_n = n
 
-    return parent / f"{stem}({max_n + 1}){suffix}"
+    return parent / f"{stem}({max_n + 1}) {suffix}"
 
 
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
