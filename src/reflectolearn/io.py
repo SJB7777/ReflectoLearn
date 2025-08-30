@@ -1,11 +1,15 @@
 import re
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
 import h5py
 import numpy as np
 import torch
+from refnx.reflect.structure import Structure
 from tqdm import tqdm
+
+from reflectolearn.processing.simulate import add_xrr_noise, make_n_layer_structure, make_parameters, structure_to_R
 
 
 def append_timestamp(path: str | Path) -> Path:
@@ -58,6 +62,99 @@ def next_unique_file(path: Path | str) -> Path:
                 max_n = n
 
     return parent / f"{stem}({max_n + 1}) {suffix}"
+
+
+def simulate_one(idx: int, n_layer: int, q: np.ndarray, has_noise: bool):
+    """Make one sample"""
+    thicknesses, roughnesses, slds = make_parameters(n_layer)
+    structure: Structure = make_n_layer_structure(thicknesses, roughnesses, slds)
+    R = structure_to_R(structure, q)
+    if has_noise:
+        R = add_xrr_noise(R)
+    return (
+        idx,
+        R.astype("f4"),
+        np.array(thicknesses, dtype="f4"),
+        np.array(roughnesses, dtype="f4"),
+        np.array(slds, dtype="f4"),
+    )
+
+
+def make_xrr_hdf5(
+    save_file: Path,
+    n_layer: int,
+    q: np.ndarray,
+    n_sample: int,
+    has_noise: bool = True,
+    n_workers: int | None = None,
+    batch_size: int = 1000,
+    chunksize: int = 100
+):
+    """
+    Generate large XRR HDF5 Dataset
+    """
+    N = len(q)
+
+    with h5py.File(save_file, "w") as f:
+        # Save q
+        f.create_dataset("q", data=q.astype("f4"))
+
+        # Make large dataset
+        dR = f.create_dataset(
+            "R",
+            shape=(n_sample, N),
+            dtype="f4",
+            compression="lzf",
+            chunks=(batch_size, N),
+        )
+        dT = f.create_dataset(
+            "thickness",
+            shape=(n_sample, n_layer),
+            dtype="f4",
+            compression="lzf",
+            chunks=(batch_size, n_layer),
+        )
+        dRough = f.create_dataset(
+            "roughness",
+            shape=(n_sample, n_layer),
+            dtype="f4",
+            compression="lzf",
+            chunks=(batch_size, n_layer),
+        )
+        dSLD = f.create_dataset(
+            "sld",
+            shape=(n_sample, n_layer),
+            dtype="f4",
+            compression="lzf",
+            chunks=(batch_size, n_layer),
+        )
+
+        # Parallel processing
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            pbar = tqdm(total=n_sample)
+            for batch_start in range(0, n_sample, batch_size):
+                batch_end = min(batch_start + batch_size, n_sample)
+                batch_indices = range(batch_start, batch_end)
+
+                results = list(
+                    executor.map(
+                        simulate_one,
+                        batch_indices,
+                        [n_layer] * len(batch_indices),
+                        [q] * len(batch_indices),
+                        [has_noise] * len(batch_indices),
+                        chunksize=chunksize,
+                    )
+                )
+
+                # Save batch result
+                for idx, R, T, Rough, SLD in results:
+                    dR[idx] = R
+                    dT[idx] = T
+                    dRough[idx] = Rough
+                    dSLD[idx] = SLD
+
+                pbar.update(len(batch_indices))
 
 
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
