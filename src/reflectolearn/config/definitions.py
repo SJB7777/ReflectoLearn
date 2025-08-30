@@ -55,6 +55,3 @@ class ExpConfig(BaseModel):
     project: ProjectConfig = Field(..., description="Project configuration")
     path: PathConfig = Field(..., description="Directory configuration")
     training: TrainingConfig = Field(..., description="Training configuration")
-
-    # def to_pretty_str(self) -> str:
-    #     for 
