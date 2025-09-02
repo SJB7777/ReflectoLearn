@@ -3,7 +3,6 @@ from collections.abc import Iterable
 import joblib
 import numpy as np
 import torch
-from loguru import logger
 from scipy.optimize import curve_fit
 from scipy.signal import argrelmax
 from sklearn.preprocessing import StandardScaler
@@ -159,7 +158,9 @@ if __name__ == "__main__":
 
     from reflectolearn.config import ConfigManager
     from reflectolearn.io import get_data
+    from reflectolearn.logger import setup_logger
 
+    logger = setup_logger()
     ConfigManager.initialize()
     config = ConfigManager.load_config()
 
@@ -189,18 +190,18 @@ if __name__ == "__main__":
     rmse_blended = rmse(y_true, y_hat_blend)
     rmse_prior = rmse(y_true, prior)
 
-    print(f"RMSE Model only: {rmse_model:.4f}")
-    print(f"RMSE Model+Prior: {rmse_blended:.4f}")
-    print(f"RMSE Prior only: {rmse_prior:.4f}")
+    logger.info(f"RMSE Model only: {rmse_model:.4f}")
+    logger.info(f"RMSE Model+Prior: {rmse_blended:.4f}")
+    logger.info(f"RMSE Prior only: {rmse_prior:.4f}")
 
     # === R² 계산 (각 파라미터별) ===
     r2_model = r2_score(y_true, y_hat, multioutput='raw_values')
     r2_blended = r2_score(y_true, y_hat_blend, multioutput='raw_values')
     r2_prior = r2_score(y_true, prior, multioutput='raw_values')
 
-    print("\nR² per parameter")
+    logger.info("\nR² per parameter")
     for i in range(y_true.shape[1]):
-        print(f"y[{i}]: model={r2_model[i]:.3f}, blended={r2_blended[i]:.3f}, prior={r2_prior[i]:.3f}")
+        logger.info(f"y[{i}]: model={r2_model[i]:.3f}, blended={r2_blended[i]:.3f}, prior={r2_prior[i]:.3f}")
 
     # === 시각화 ===
     prior_indices = (1, 3)
