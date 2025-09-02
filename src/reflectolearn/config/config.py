@@ -42,7 +42,7 @@ class ConfigManager:
             raise RuntimeError("Config file not initialized. Call initialize() first.")
 
         if reload or cls._cached_config is None:
-            cls._cached_config = cls._load_config()
+            cls._cached_config = cls.__load_config()
 
         return cls._cached_config
 
@@ -75,7 +75,7 @@ class ConfigManager:
 
     # -------------------- Internal Helpers --------------------
     @classmethod
-    def _load_config(cls) -> ExpConfig:
+    def __load_config(cls) -> ExpConfig:
         with open(cls._config_file, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
 

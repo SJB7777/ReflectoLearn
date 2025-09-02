@@ -19,7 +19,7 @@ def main():
     logger.info(f"Configuration: \n{config.model_dump_json(indent=2)}")
 
     N: int = 300
-    n_sample: int = 10000
+    n_sample: int = 10_000
     n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 

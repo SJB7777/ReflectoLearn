@@ -157,6 +157,14 @@ def make_xrr_hdf5(
                 pbar.update(len(batch_indices))
 
 
+def read_xrr_hdf5(file: str | Path) -> dict:
+    with h5py.File(file, "r") as f:
+        data = {}
+        for key, val in f.items():
+            data[key] = val[()]
+        return data
+
+
 def xrd2hdf5(data: dict[str, np.ndarray], save_file: Path):
     if not {"q", "Rs", "params"}.issubset(data.keys()):
         raise ValueError("Data must contain 'q', 'Rs', and 'params' keys.")
@@ -245,3 +253,12 @@ def get_data(path: Path):
 
     # Convert lists to numpy arrays for consistent output
     return {"q": np.array(q), "Rs": np.array(Rs), "params": np.array(params)}
+
+
+if __name__ == "__main__":
+    from reflectolearn.config import ConfigManager
+
+    ConfigManager.initialize("config.yaml")
+    config = ConfigManager.load_config()
+    data = read_xrr_hdf5(config.path.data_file)
+    print(data)

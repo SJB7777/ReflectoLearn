@@ -33,7 +33,7 @@ def setup_logger() -> Logger:
     config = ConfigManager.load_config()
     log_dir: Path = config.path.log_dir
 
-    formatter = "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{function}:{line} - {message}"
+    formatter = "{time:YYYY-MM-DD HH:mm} | {level} | {file}:{line} | {message}"
     log_file: str = log_dir / "{time:YYYY-MM-DD}/{time:YYYYMMDD_HHmmss}.log"
     loguru.logger.add(log_file, format=formatter, rotation="500 MB", compression="zip")
 
