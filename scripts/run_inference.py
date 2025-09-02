@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 from scipy.signal import argrelmax
 from sklearn.preprocessing import StandardScaler
 
-from reflectolearn.io import get_data
+from reflectolearn.io import get_data, read_xrr_hdf5
 from reflectolearn.math_utils import normalize
 from reflectolearn.models.model import get_model
 from reflectolearn.processing.fitting import estimate_q, func_gauss3_with_noise_ver2, s_vector_transform_q, xrr_fft
@@ -90,7 +90,7 @@ def guessing(q, R) -> None | tuple[float, float]:
     # params: list[str]= ["a1", "w1", "a2", "pmax2", "w2", "a3", "pmax3", "w3", "a4", "w4", "z0"]
     p0: list[float] = [0.1, 5, 0.1, pmax2, 5, 0.1, pmax3, 5, 1, 10, 0.001]
     try:
-        popt, pcov = gaussian3_fitting(x_fit, y_fit, p0)
+        popt = gaussian3_fitting(x_fit, y_fit, p0)
     except RuntimeError:
         return None
 
@@ -111,9 +111,9 @@ def infer(
 ):
     # --- load
     scaler: StandardScaler = joblib.load(scaler_path)
-    data = get_data(data_file)
+    data = read_xrr_hdf5(data_file)
     q = data["q"]                      # (Lq,)
-    Rs = data["Rs"]                    # (N, L)
+    Rs = data["R"]                    # (N, L)
     x = normalize(torch.tensor(Rs, dtype=torch.float32))  # (N, L)
 
     # --- model
@@ -133,7 +133,7 @@ def infer(
         if g is None:
             continue
         pos1, pos2 = g
-        prior_raw[i, 1] = pos1
+        prior_raw[i, 2] = pos1
         prior_raw[i, 3] = pos2
 
     # --- blend (scaled 공간에서)
@@ -149,7 +149,6 @@ def infer(
 
 if __name__ == "__main__":
     from pathlib import Path
-    from typing import Any
 
     import joblib
     import matplotlib.pyplot as plt
@@ -161,26 +160,27 @@ if __name__ == "__main__":
     from reflectolearn.logger import setup_logger
 
     logger = setup_logger()
-    ConfigManager.initialize()
+    ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
 
-    model_root: Path = Path("./results/p100o6_raw_hybrid")
+    model_root: Path = Path("./results/model_20250902_104441")
     y_hat, y_hat_blend, prior = infer(
         ckpt_path = model_root / "model.pt",
         scaler_path= model_root / "scaler.pkl",
         data_file = config.path.data_file,
         model_type = ModelType.HYBRID,         # get_model 내부 이름에 맞추세요
         alpha_model = 0.7,                  # 모델 70%, prior 30%
-        prior_indices = (1, 3),
+        prior_indices = (2, 3),
     )
     # y_hat: 순수 모델 예측 (raw)
     # y_hat_blend: prior 보정 결과 (raw)
     # prior: 추정된 prior (raw; 없는 곳은 NaN)
 
     # === ground truth 로드 ===
-
-    data: dict[str, Any] = get_data(config.path.data_file)
-    y_true = data["params"].astype(np.float64)  # (N, D)
+    data = read_xrr_hdf5(config.path.data_file)
+    q = data["q"]
+    x_array = data["R"]
+    y_true = np.concatenate([data["roughness"], data["thickness"], data["sld"]], axis=1).astype(np.float32)
 
     # === 평가 함수 ===
     def rmse(y_true, y_pred):

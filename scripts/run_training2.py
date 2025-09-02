@@ -63,10 +63,8 @@ def main():
     logger.info(f"Using device: {device}")
     logger.info(f"Number of workers: {num_workers}")
 
-    data_file = config.path.data_file
-
     # Data Loading
-    data = read_xrr_hdf5(data_file)
+    data = read_xrr_hdf5(config.path.data_file)
     q = data["q"]
     x_array = data["R"]
     y_array = np.concatenate([data["roughness"], data["thickness"], data["sld"]], axis=1).astype(np.float32)
@@ -116,7 +114,7 @@ def main():
     )
     logger.info("Model training finished.")
     # === Directories ===
-    result_dir = append_timestamp(config.path.output_dir)
+    result_dir = append_timestamp(config.path.output_dir / "model")
     result_dir.mkdir(parents=True, exist_ok=True)
 
     # === Save model ===

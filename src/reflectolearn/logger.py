@@ -35,7 +35,7 @@ def setup_logger() -> Logger:
 
     formatter = "{time} | {level} | {file.path}:{line} | {message}"
     log_file: str = log_dir / "{time:YYYY-MM-DD}/{time:YYYYMMDD_HHmmss}.log"
-    loguru.logger.add(log_file, format=formatter, rotation="500 MB", compression="zip", time_format="%Y-%m-%d %H:%M")
+    loguru.logger.add(log_file, format=formatter, rotation="500 MB", compression="zip")
 
     caller_frame = inspect.stack()[1]
     caller_file = Path(caller_frame.filename).resolve()
