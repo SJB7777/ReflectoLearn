@@ -136,6 +136,7 @@ def main():
         config=config,
     )
     logger.info(f"Training statistics saved to {stats_path}")
+    logger.info(f"Save model to {result_dir}")
 
 
 if __name__ == "__main__":

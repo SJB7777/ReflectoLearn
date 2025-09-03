@@ -18,8 +18,8 @@ def main():
     config = ConfigManager.load_config()
     logger.info(f"Configuration: \n{config.model_dump_json(indent=2)}")
 
-    N: int = 300
-    n_sample: int = 1_000_000
+    N: int = config.simulate.n_q
+    n_sample: int = config.simulate.n_sample
     n_layer: int = 2
     q = np.linspace(0.03, 0.3, N)
 

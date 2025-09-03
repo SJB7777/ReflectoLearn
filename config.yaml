@@ -10,6 +10,10 @@ path:
   data_file: "${path.data_root}/p300o6_raw.h5"
   output_dir: "./results"
 
+simulate:
+  n_q: 256
+  n_sample: 1000000
+
 training:
   batch_size: 256
   epochs: 200

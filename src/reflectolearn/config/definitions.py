@@ -31,6 +31,15 @@ class PathConfig(BaseModel):
     output_dir: Path = Field(..., description="Directory where results will be saved")
 
 
+class SimulationConfig(BaseModel):
+    """
+    Configuration for simulations.
+    """
+
+    n_q: int = Field(256, description="Number of q points.")
+    n_sample: int = Field(1_000_000, description="Number of samples.")
+
+
 class TrainingConfig(BaseModel):
     """
     Configuration for training parameters.
@@ -55,3 +64,4 @@ class ExpConfig(BaseModel):
     project: ProjectConfig = Field(..., description="Project configuration")
     path: PathConfig = Field(..., description="Directory configuration")
     training: TrainingConfig = Field(..., description="Training configuration")
+    simulate: SimulationConfig = Field(..., description="Simulation configuration")
