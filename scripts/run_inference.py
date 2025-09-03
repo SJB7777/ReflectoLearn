@@ -6,8 +6,9 @@ import torch
 from scipy.optimize import curve_fit
 from scipy.signal import argrelmax
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm
 
-from reflectolearn.io import get_data, read_xrr_hdf5
+from reflectolearn.io import read_xrr_hdf5
 from reflectolearn.math_utils import normalize
 from reflectolearn.models.model import get_model
 from reflectolearn.processing.fitting import estimate_q, func_gauss3_with_noise_ver2, s_vector_transform_q, xrr_fft
@@ -19,7 +20,7 @@ def blend_with_prior_scaled(
     y_pred_scaled: torch.Tensor,                     # (N, D) in scaled space
     prior_raw: np.ndarray | None,                 # (N, D) in raw space, np.nan where no prior
     scaler: StandardScaler,
-    prior_indices: Iterable[int] = (1, 3),
+    prior_indices: Iterable[int] = (2, 3),
     alpha_model: float = 0.7,                        # weight for model in [0,1]
 ) -> torch.Tensor:
     """
@@ -128,7 +129,8 @@ def infer(
 
     # --- build prior (raw 공간). prior 없는 위치는 np.nan
     prior_raw = np.full((len(Rs), D), np.nan, dtype=np.float64)
-    for i, R in enumerate(Rs):
+    logger.info("Start Guessing...")
+    for i, R in tqdm(enumerate(Rs), total=len(Rs)):
         g = guessing(q, R)
         if g is None:
             continue
@@ -147,6 +149,7 @@ def infer(
 
     return y_pred_raw, y_blended_raw, prior_raw
 
+
 if __name__ == "__main__":
     from pathlib import Path
 
@@ -156,7 +159,6 @@ if __name__ == "__main__":
     from sklearn.metrics import r2_score
 
     from reflectolearn.config import ConfigManager
-    from reflectolearn.io import get_data
     from reflectolearn.logger import setup_logger
 
     logger = setup_logger()
@@ -183,21 +185,41 @@ if __name__ == "__main__":
     y_true = np.concatenate([data["roughness"], data["thickness"], data["sld"]], axis=1).astype(np.float32)
 
     # === 평가 함수 ===
-    def rmse(y_true, y_pred):
-        return np.sqrt(np.nanmean((y_true - y_pred)**2))
+    def safe_rmse(y_true, y_pred):
+        mask = ~np.isnan(y_pred).any(axis=1)
+        return np.sqrt(np.mean((y_true[mask] - y_pred[mask])**2))
 
-    rmse_model = rmse(y_true, y_hat)
-    rmse_blended = rmse(y_true, y_hat_blend)
-    rmse_prior = rmse(y_true, prior)
+    def safe_r2_score(y_true, y_pred, multioutput="raw_values"):
+        """
+        NaN-safe r2_score 계산. feature 단위로 NaN이 있는 샘플을 제외하고 계산.
+        """
+        results = []
+        n_features = y_true.shape[1]
+
+        for j in range(n_features):
+            mask = ~np.isnan(y_pred[:, j]) & ~np.isnan(y_true[:, j])
+            if np.sum(mask) < 2:
+                # 샘플이 너무 적으면 R² 계산 불가 → NaN 반환
+                results.append(np.nan)
+            else:
+                score = r2_score(y_true[mask, j], y_pred[mask, j])
+                results.append(score)
+
+        return np.array(results) if multioutput == "raw_values" else np.nanmean(results)
+
+
+    rmse_model = safe_rmse(y_true, y_hat)
+    rmse_blended = safe_rmse(y_true, y_hat_blend)
+    rmse_prior = safe_rmse(y_true, prior)
 
     logger.info(f"RMSE Model only: {rmse_model:.4f}")
     logger.info(f"RMSE Model+Prior: {rmse_blended:.4f}")
     logger.info(f"RMSE Prior only: {rmse_prior:.4f}")
 
     # === R² 계산 (각 파라미터별) ===
-    r2_model = r2_score(y_true, y_hat, multioutput='raw_values')
-    r2_blended = r2_score(y_true, y_hat_blend, multioutput='raw_values')
-    r2_prior = r2_score(y_true, prior, multioutput='raw_values')
+    r2_model = safe_r2_score(y_true, y_hat, multioutput='raw_values')
+    r2_blended = safe_r2_score(y_true, y_hat_blend, multioutput='raw_values')
+    r2_prior = safe_r2_score(y_true, prior, multioutput='raw_values')
 
     logger.info("\nR² per parameter")
     for i in range(y_true.shape[1]):
