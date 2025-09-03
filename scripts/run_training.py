@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.config import ConfigManager
+from reflectolearn.device import get_device_and_workers
 from reflectolearn.io import append_timestamp, read_xrr_hdf5, save_model
 from reflectolearn.logger import setup_logger
 from reflectolearn.math_utils import normalize
@@ -19,15 +20,6 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-
-
-def get_device_and_workers() -> tuple[torch.device, int]:
-    if torch.backends.mps.is_available():
-        return torch.device("mps"), 0
-    elif torch.cuda.is_available():
-        return torch.device("cuda"), 4
-    else:
-        return torch.device("cpu"), 0
 
 
 def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: int):
