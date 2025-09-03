@@ -2,14 +2,15 @@ import joblib
 import numpy as np
 import torch
 import torch.nn as nn
-from loguru import logger
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.io import append_timestamp, save_model
+from reflectolearn.io import append_timestamp, read_xrr_hdf5, save_model
+from reflectolearn.logger import setup_logger
+from reflectolearn.math_utils import normalize
 from reflectolearn.models.model import get_model
-from reflectolearn.processing.preprocess import load_and_preprocess_data
 from reflectolearn.training.train import train_model
 
 
@@ -50,30 +51,45 @@ def prepare_dataloaders(x_all, y_all, batch_size: int, seed: int, num_workers: i
 
 
 def main():
-    logger.info("Starting training script")
     ConfigManager.initialize("config.yaml")
     config = ConfigManager.load_config()
-    logger.info(f"Config: {config}")
+
+    logger.info("Starting training script")
+    logger.info(f"Config: \n{config.model_dump_json(indent=2)}")
     seed = config.training.seed
     set_seed(seed)
 
     device, num_workers = get_device_and_workers()
     logger.info(f"Using device: {device}")
+    logger.info(f"Number of workers: {num_workers}")
 
-    data_file = config.path.data_file
+    # Data Loading
+    data = read_xrr_hdf5(config.path.data_file)
+    q = data["q"]
+    x_array = data["R"]
+    y_array = np.concatenate([data["roughness"], data["thickness"], data["sld"]], axis=1).astype(np.float32)
 
-    x_all, y_all_scaled, scaler = load_and_preprocess_data(data_file, config.project.version)
+    logger.info(f"Shape of q: {q.shape}")
+    logger.info(f"Shape of x_array: {x_array.shape}")
+    logger.info(f"Shape of y_array: {y_array.shape}")
 
+    # Thickness prior estimation
+    scaler = StandardScaler()
+    y_scaled = scaler.fit_transform(y_array)
+    y_all = torch.tensor(y_scaled, dtype=torch.float32)
+
+    reflectivity = torch.tensor(data["R"], dtype=torch.float32)
+    x_all = normalize(reflectivity)
     train_loader, val_loader = prepare_dataloaders(
         x_all,
-        y_all_scaled,
+        y_all,
         batch_size=config.training.batch_size,
         seed=seed,
         num_workers=num_workers,
     )
 
     input_length: int = x_all.shape[1]
-    output_length: int = y_all_scaled.shape[1]
+    output_length: int = y_all.shape[1]
     logger.info(f"Input length: {input_length}")
     logger.info(f"Input length: {output_length}")
     model = get_model(
@@ -81,7 +97,6 @@ def main():
         input_length=input_length,
         output_length=output_length,
     ).to(device)
-
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config.training.learning_rate)
     loss_fn = nn.MSELoss()
@@ -99,7 +114,7 @@ def main():
     )
     logger.info("Model training finished.")
     # === Directories ===
-    result_dir = append_timestamp(config.path.output_dir)
+    result_dir = append_timestamp(config.path.output_dir / "model")
     result_dir.mkdir(parents=True, exist_ok=True)
 
     # === Save model ===
@@ -124,8 +139,9 @@ def main():
 
 
 if __name__ == "__main__":
+    logger = setup_logger()
     try:
         main()
-    except Exception as e:
-        logger.error(f"Application failed with error: {e}", exc_info=True)
+    except Exception:
+        logger.exception("Application failed with error")
         raise
