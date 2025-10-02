@@ -21,7 +21,7 @@ from reflectolearn.device import get_device_and_workers
 from reflectolearn.io import read_xrr_hdf5
 from reflectolearn.logger import setup_logger
 from reflectolearn.math_utils import normalize
-from reflectolearn.models.model import get_model
+from reflectolearn.models.general import get_model
 from reflectolearn.processing.fitting import estimate_q, func_gauss3_with_noise_ver2, s_vector_transform_q, xrr_fft
 from reflectolearn.types import ModelType
 

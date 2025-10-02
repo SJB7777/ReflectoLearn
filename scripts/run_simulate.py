@@ -1,17 +1,14 @@
 from pathlib import Path
 
 import numpy as np
+import psutil
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.io import make_xrr_hdf5, next_unique_file
+from reflectolearn.io import make_xrr_hdf5, make_xrr_random_layers, next_unique_file
+from reflectolearn.logger import setup_logger
 
 
 def main():
-    import psutil
-
-    from reflectolearn.logger import setup_logger
-
-
     logger = setup_logger()
     logger.info("Starting XRR simulation")
     ConfigManager.initialize("config.yaml")
@@ -38,8 +35,12 @@ def main():
     logger.info(f"Output file: {data_file}")
 
     logger.info("Generating XRR data...")
-    make_xrr_hdf5(
-        save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample, has_noise=False,
+    # make_xrr_hdf5(
+    #     save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample, has_noise=False,
+    #     n_workers=n_workers, batch_size=batch_size, chunksize=chunk_size
+    # )
+    make_xrr_random_layers(
+        save_file=data_file, max_n_layer=6, q=q, n_sample=n_sample, has_noise=False,
         n_workers=n_workers, batch_size=batch_size, chunksize=chunk_size
     )
 

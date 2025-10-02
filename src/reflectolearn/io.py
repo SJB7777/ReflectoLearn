@@ -157,6 +157,83 @@ def make_xrr_hdf5(
                 pbar.update(len(batch_indices))
 
 
+def make_xrr_random_layers(
+    save_file: Path,
+    max_n_layer: int,
+    q: np.ndarray,
+    n_sample: int,
+    has_noise: bool = True,
+    n_workers: int | None = None,
+    batch_size: int = 1000,
+    chunksize: int = 100
+):
+    """
+    Generate XRR dataset with variable number of layers.
+    Padding is filled with -1 for unused layers.
+    """
+    N = len(q)
+
+    with h5py.File(save_file, "w") as f:
+        f.create_dataset("q", data=q.astype("f4"))
+
+        dR = f.create_dataset("R", (n_sample, N), dtype="f4",
+                              compression="lzf", chunks=(batch_size, N))
+
+        # thickness, roughness, sld: 패딩 값으로 -1 채움
+        dT = f.create_dataset("thickness", (n_sample, max_n_layer), dtype="f4",
+                              compression="lzf", chunks=(batch_size, max_n_layer),
+                              fillvalue=-1)
+        dRough = f.create_dataset("roughness", (n_sample, max_n_layer), dtype="f4",
+                                  compression="lzf", chunks=(batch_size, max_n_layer),
+                                  fillvalue=-1)
+        dSLD = f.create_dataset("sld", (n_sample, max_n_layer), dtype="f4",
+                                compression="lzf", chunks=(batch_size, max_n_layer),
+                                fillvalue=-1)
+
+        # 층 개수 저장
+        dNL = f.create_dataset("n_layer", (n_sample,), dtype="i4")
+
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            pbar = tqdm(total=n_sample)
+            for batch_start in range(0, n_sample, batch_size):
+                batch_end = min(batch_start + batch_size, n_sample)
+                batch_indices = range(batch_start, batch_end)
+
+                # 샘플별 랜덤 층 개수 생성
+                n_layers = [np.random.randint(1, max_n_layer + 1) for _ in batch_indices]
+
+                results = list(
+                    executor.map(
+                        simulate_one,
+                        batch_indices,
+                        n_layers,
+                        [q] * len(batch_indices),
+                        [has_noise] * len(batch_indices),
+                        chunksize=chunksize,
+                    )
+                )
+
+                for idx, R, T, Rough, SLD in results:
+                    n_layer = len(T)
+                    dR[idx] = R
+
+                    # 먼저 -1로 채워두고 실제 층까지만 덮어씀
+                    t_arr = np.full((max_n_layer,), -1, dtype="f4")
+                    r_arr = np.full((max_n_layer,), -1, dtype="f4")
+                    s_arr = np.full((max_n_layer,), -1, dtype="f4")
+
+                    t_arr[:n_layer] = T
+                    r_arr[:n_layer] = Rough
+                    s_arr[:n_layer] = SLD
+
+                    dT[idx] = t_arr
+                    dRough[idx] = r_arr
+                    dSLD[idx] = s_arr
+                    dNL[idx] = n_layer
+
+                pbar.update(len(batch_indices))
+
+
 def read_xrr_hdf5(file: str | Path) -> dict:
     with h5py.File(file, "r") as f:
         data = {}

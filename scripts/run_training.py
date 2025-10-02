@@ -11,7 +11,7 @@ from reflectolearn.device import get_device_and_workers
 from reflectolearn.io import append_timestamp, read_xrr_hdf5, save_model
 from reflectolearn.logger import setup_logger
 from reflectolearn.math_utils import normalize
-from reflectolearn.models.model import get_model
+from reflectolearn.models.general import get_model
 from reflectolearn.training.train import train_model
 
 
