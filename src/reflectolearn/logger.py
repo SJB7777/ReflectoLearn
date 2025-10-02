@@ -12,8 +12,8 @@ Example usage:
     logger = setup_logger()
     logger.info("This is an info message.")
 """
-
 import inspect
+import sys
 from pathlib import Path
 
 import loguru
@@ -22,7 +22,7 @@ from loguru._logger import Logger
 from .config import ConfigManager
 
 
-def setup_logger() -> Logger:
+def setup_logger(level="INFO") -> Logger:
     """
     Configures and sets up the logger with a custom format and log file settings.
 
@@ -33,15 +33,24 @@ def setup_logger() -> Logger:
     config = ConfigManager.load_config()
     log_dir: Path = config.path.log_dir
 
-    formatter = "{time} | {level} | {file.path}:{line} | {message}"
+    formatter: str = "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{function}:{line} - {message}"
+    formatter = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+        "<level>{message}</level>"
+    )
     log_file: str = log_dir / "{time:YYYY-MM-DD}/{time:YYYYMMDD_HHmmss}.log"
+
+    loguru.logger.remove()
     loguru.logger.add(log_file, format=formatter, rotation="500 MB", compression="zip")
+    loguru.logger.add(sys.stdout, format=formatter, level=level)
 
     caller_frame = inspect.stack()[1]
     caller_file = Path(caller_frame.filename).resolve()
     caller_line = caller_frame.lineno
-
     loguru.logger.info(f"Logger setup called from \"{caller_file}:{caller_line}\"")
+
     return loguru.logger
 
 
@@ -64,3 +73,4 @@ if __name__ == "__main__":
     logger.info(metadata)
 
     print("All tests passed.")
+

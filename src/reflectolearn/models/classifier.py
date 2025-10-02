@@ -179,11 +179,11 @@ if __name__ == "__main__":
     # print("Model state dict successfully loaded.")
 
 
-    import numpy as np
     import matplotlib as plt
-    from torch.utils.data import DataLoader, Dataset, random_split
-    from sklearn.metrics import confusion_matrix
+    import numpy as np
     import seaborn as sns
+    from sklearn.metrics import confusion_matrix
+    from torch.utils.data import DataLoader, Dataset, random_split
 
 
     # --- Load checkpoint ---

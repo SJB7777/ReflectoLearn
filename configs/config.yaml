@@ -1,0 +1,3 @@
+defaults:
+  - simulate: xrr
+  - train: classify

@@ -1,0 +1,5 @@
+val_size: 0.2
+train_size: 0.8
+epochs: 50
+batch_size: 128
+lr: 1e-3
