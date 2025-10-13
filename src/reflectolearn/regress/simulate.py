@@ -41,7 +41,7 @@ def main():
         n_workers=n_workers, batch_size=batch_size, chunksize=chunk_size
     )
 
-    logger.info(f"XRR simulation data saved to {save_file} successfully")
+    logger.info(f"XRR simulation data saved to {data_file} successfully")
 
 
 if __name__ == "__main__":

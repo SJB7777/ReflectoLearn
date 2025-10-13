@@ -23,7 +23,7 @@ def train_regressor(
     Train regression model for thickness prediction given n_layer.
     Returns dict with model state and training history (for evaluate.py).
     """
-    logger = setup_logger()
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
 
@@ -100,11 +100,17 @@ def train_regressor(
 
 if __name__ == "__main__":
     from .data import ThicknessDataset
+    from pathlib import Path
 
 
+    logger = setup_logger()
     n_layer:int = 3
-    dataset_path = r"D:\03_Resources\Data\XRR_AI\data\250929.h5"
-    save_file = rf"results/regress_thickness_n{n_layer}_2.pt"
-    dataset = ThicknessDataset(dataset_path, n_layer)
-    checkpoint = train_regressor(dataset, save_file, n_layer)
+    dataset_path = Path("X:\\XRR_AI\\hdf5_XRR\\data\\251013(1).h5")
+    save_file = Path(rf"results/regress_thickness_n{n_layer}_2(1).pt")
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"{dataset_path} not found. Please change the path to a valid file.")
+    dataset = ThicknessDataset(dataset_path)
+    checkpoint = train_regressor(dataset, save_file, dataset.n_layer)
+
+    logger.info(f"Training complete for n_layer={dataset.n_layer}")
     # print(checkpoint)
