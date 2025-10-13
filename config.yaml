@@ -7,12 +7,12 @@ path:
   log_dir: ./logs
   data_root: "D:\\03_Resources\\Data\\XRR_AI\\data"
   # data_root: "X:\\XRR_AI\\hdf5_XRR\\data"
-  data_file: "${path.data_root}/250929.h5"
+  data_file: "${path.data_root}/251010.h5"
   output_dir: "./results"
 
 simulate:
   n_q: 256
-  n_sample: 1000000
+  n_sample: 3_000_000
 
 training:
   batch_size: 256

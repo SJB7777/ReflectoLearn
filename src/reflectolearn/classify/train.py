@@ -5,10 +5,11 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 from ..logger import setup_logger
-from .train import NlayerClassifier
+from .data import NlayerDataset
+from .model import NlayerClassifier
 
 
-def train_classifier(dataset, max_epoch=10, batch_size=128):
+def train_classifier(dataset, num_classes, max_epoch=10, batch_size=128):
     logger = setup_logger()
 
     # Train/Validation 데이터 분리
@@ -20,7 +21,6 @@ def train_classifier(dataset, max_epoch=10, batch_size=128):
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     # 모델 초기화
-    num_classes = 6
     model = NlayerClassifier(num_classes)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -102,3 +102,16 @@ def train_classifier(dataset, max_epoch=10, batch_size=128):
         'history': history,
         'num_classes': num_classes # 모델 재로딩에 필요한 정보
     }
+
+
+if __name__ == "__main__":
+    from datetime import datetime
+    from pathlib import Path
+
+
+    dataset_path = Path(r"D:\03_Resources\Data\XRR_AI\data\251010.h5")
+    save_file = Path(rf"results/xrr_classifier_checkpoint/{datetime.now().strftime("%Y%m%d_%H%M%S")}.pt")
+    dataset = NlayerDataset(dataset_path)
+    checkpoint = train_classifier(dataset, num_classes=10)
+    save_file.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(checkpoint, save_file)

@@ -107,4 +107,4 @@ if __name__ == "__main__":
     save_file = rf"results/regress_thickness_n{n_layer}_2.pt"
     dataset = ThicknessDataset(dataset_path, n_layer)
     checkpoint = train_regressor(dataset, save_file, n_layer)
-    print(checkpoint)
+    # print(checkpoint)

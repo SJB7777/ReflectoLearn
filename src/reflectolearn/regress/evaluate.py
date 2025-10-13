@@ -51,10 +51,11 @@ def evaluate_regressor(checkpoint_path: str, dataset: ThicknessDataset, batch_si
 
 
 if __name__ == "__main__":
-    from .data import ThicknessDataset
-    checkpoint_path = r"results\regress\thickness_n3.pt"
+    # from .data import ThicknessDataset
+    n_layer = 3
+    checkpoint_path = rf"results/regress_thickness_n{n_layer}_2.pt"
     dataset_path = r"D:\03_Resources\Data\XRR_AI\data\250929.h5"
-    dataset = ThicknessDataset(dataset_path, 3)
+    dataset = ThicknessDataset(dataset_path, n_layer)
 
     mae, r2 = evaluate_regressor(checkpoint_path, dataset)
     print(mae, r2)
