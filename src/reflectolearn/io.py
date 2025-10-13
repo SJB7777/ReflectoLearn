@@ -36,8 +36,8 @@ def next_unique_file(path: Path | str) -> Path:
 
     Example:
         file.txt       -> file.txt        (if doesn't exist)
-        file.txt       -> file (1).txt     (if file.txt exists)
-        file (1).txt    -> file (2).txt     (if file(1).txt exists)
+        file.txt       -> file(1).txt     (if file.txt exists)
+        file(1).txt    -> file(2).txt     (if file(1).txt exists)
     """
     path = Path(path)
     parent = path.parent

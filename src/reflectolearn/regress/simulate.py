@@ -4,7 +4,7 @@ import numpy as np
 import psutil
 
 from reflectolearn.config import ConfigManager
-from reflectolearn.io import make_xrr_random_layers, next_unique_file
+from reflectolearn.io import make_xrr_hdf5, next_unique_file
 from reflectolearn.logger import setup_logger
 
 
@@ -36,8 +36,8 @@ def main():
 
     logger.info("Generating XRR data...")
 
-    make_xrr_random_layers(
-        save_file=data_file, max_n_layer=10, q=q, n_sample=n_sample, has_noise=False,
+    make_xrr_hdf5(
+        save_file=data_file, n_layer=n_layer, q=q, n_sample=n_sample, has_noise=True,
         n_workers=n_workers, batch_size=batch_size, chunksize=chunk_size
     )
 

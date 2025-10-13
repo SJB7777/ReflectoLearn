@@ -109,7 +109,10 @@ def evaluate_checkpoint(checkpoint_path, dataset_path, batch_size=128, device=No
 
 
 if __name__ == "__main__":
-    checkpoint_path = "results/xrr_classifier_checkpoint.pt"
-    dataset_path = r"D:\03_Resources\Data\XRR_AI\data\250929.h5"
+    from pathlib import Path
+
+
+    checkpoint_path = Path("results/xrr_classifier_checkpoint/20251013_131654.pt")
+    dataset_path = Path(r"X:\\XRR_AI\\hdf5_XRR\\data\\251013.h5")
     metrics = evaluate_checkpoint(checkpoint_path, dataset_path)
     print(metrics)

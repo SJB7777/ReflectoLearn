@@ -109,7 +109,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
 
-    dataset_path = Path(r"D:\03_Resources\Data\XRR_AI\data\251010.h5")
+    dataset_path = Path(r"X:\\XRR_AI\\hdf5_XRR\\data\\251010.h5")
     save_file = Path(rf"results/xrr_classifier_checkpoint/{datetime.now().strftime("%Y%m%d_%H%M%S")}.pt")
     dataset = NlayerDataset(dataset_path)
     checkpoint = train_classifier(dataset, num_classes=10)
