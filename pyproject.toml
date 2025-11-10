@@ -34,7 +34,7 @@ dependencies = [
     "torchvision",
     "torchaudio",
     "hydra-core",
-    "seaborn"
+    "seaborn",
 ]
 
 [[tool.uv.index]]

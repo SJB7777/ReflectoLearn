@@ -15,7 +15,7 @@ def make_parameters(n: int):
         max_thick = 100
         thickness = random.uniform(30, max_thick)
         roughness = random.uniform(0, thickness * 0.03)
-        sld = random.uniform(0.5, 2.0)
+        sld = random.uniform(0.5, 20.0)
 
         thicknesses.append(thickness)
         roughnesses.append(roughness)
@@ -31,7 +31,7 @@ def make_n_layer_structure(
 ) -> Structure:
     # 기본 매질 정의
     air = SLD(0.0, name="Air")
-    substrate = SLD(2.0, name="Substrate")
+    sio2 = SLD(19.2, name="SiO2")
 
     # Stack을 이용한 반복 구조 생성
     multilayer = Stack(name="Multilayer", repeats=len(thicknesses))
@@ -40,7 +40,7 @@ def make_n_layer_structure(
         multilayer.append(film(t, r))
 
     # Structure 조립
-    structure = air(0, 0) | multilayer | substrate(0, 3)
+    structure = air(0, 0) | multilayer | sio2(0, 3)
     return structure
 
 

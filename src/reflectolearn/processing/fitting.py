@@ -44,7 +44,9 @@ def estimate_q(q: np.ndarray, R: np.ndarray, threshold: float = 0.99):
         Estimated critical q value.
     """
     # normalize
-    R = R / np.max(R)
+
+    if R.max() != 0:
+        R = R / np.max(R)
 
     # 방법 1: R이 threshold 아래로 내려가기 시작하는 첫 q
     mask = np.where(R < threshold)[0]
@@ -85,33 +87,32 @@ def s_vector_transform(data, crit_ang, wave_length: float = 0.152):
     f = scp.interpolate.interp1d(s_cor, intensity, kind="cubic")
     return x, f(x)
 
-def s_vector_transform_q(data_q: np.ndarray, q_crit: float, step_num: int = 1000):
+def s_vector_transform_q(qz: np.ndarray, intensity: np.ndarray,q_crit: float):
     """
     Preprocess XRR dataset when input is already qz.
     :param data_q: numpy array with [qz (1/nm), intensity]
     :param q_crit: critical q (1/nm)
-    :return: (x, y) -> rescaled evenly spaced dataset
+    :return: (x, y)
     """
-    qz = data_q[:, 0]
-    intensity = data_q[:, 1]
 
     q_cor, mask = np.unique(np.sqrt(np.clip(qz**2 - q_crit**2, 0, None)), return_index=True)
     intensity = intensity[mask]
     # Fresnel normalization (보정)
     intensity_corr = q_cor**4 * intensity
 
-    # 등간격 보간
-    x = np.linspace(q_cor.min(), q_cor.max(), step_num)
-    f = scp.interpolate.interp1d(q_cor, intensity_corr, kind="cubic")
-    return x, f(x)
+    return q_cor, intensity_corr
 
 
-def xrr_fft(x, y, d=None, window=2, n=None):
+def xrr_fft(x, y, d=None, window=2, n=None, step_num: int = 1000):
     """
     FFT 변환 (XRR 분석 전용)
-    :param x: delta inverse q
-    :param y: intensity
+
     """
+    # 등간격 보간
+    f_cubic = scp.interpolate.interp1d(x, y, kind="cubic")
+    x = np.linspace(x.min(), x.max(), step_num)
+    y = f_cubic(x)
+
     if d is None:
         d = x[1] - x[0]
 
@@ -136,8 +137,9 @@ def xrr_fft(x, y, d=None, window=2, n=None):
 # Fitting 모델 정의
 # ---------------------------
 def func_noise(x, amp, ex):
-    """1/f noise background"""
-    return amp / np.power(x, ex)
+    """1/f^alpha type noise (x>0)"""
+    x_safe = np.clip(x, 1e-12, None)
+    return amp / (x_safe**ex)
 
 def func_gauss(x, a, pmax, w):
     """Single Gaussian"""
